@@ -1,4 +1,5 @@
-#  ERROR HANDLING: TRY ... EXCEPT
+#  WHILE LOOPS
+
 
 calculation_to_units = 24
 name_of_unit = "hours"  # this variable is GLOBAL
@@ -31,6 +32,6 @@ def validate_and_execute():  # function is used to check if the input is a digit
     except ValueError:
         print("your input is not a valid number")
 
-
-user_input = input("hey input some data and i will convert it to hours\n")
-validate_and_execute()
+while True:
+    user_input = input("hey input some data and i will convert it to hours\n")
+    validate_and_execute()
