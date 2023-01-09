@@ -1,4 +1,4 @@
-#  WHILE LOOPS
+#  WHILE LOOPS - while user does not enter exit, a program will continue to run
 
 
 calculation_to_units = 24
@@ -6,7 +6,7 @@ name_of_unit = "hours"  # this variable is GLOBAL
 
 
 def days_to_units(num_of_days):
-    return f"{num_of_days} days are {num_of_days*calculation_to_units} {name_of_unit}"
+    return f"{num_of_days} days are {num_of_days * calculation_to_units} {name_of_unit}"
 
 
 """ BEST PRACTICE - block below can be put as a function.
@@ -32,6 +32,8 @@ def validate_and_execute():  # function is used to check if the input is a digit
     except ValueError:
         print("your input is not a valid number")
 
-while True:
+
+user_input = ""  # variable needs to be initialized before loop starts, otherwise it will complain and stop
+while user_input != "exit":
     user_input = input("hey input some data and i will convert it to hours\n")
     validate_and_execute()
