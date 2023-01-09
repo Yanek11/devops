@@ -24,7 +24,8 @@ def validate_and_execute():  # function is used to check if the input is a digit
             print(calculated_value)
         elif user_input_number == 0:
             print("you entered a 0, enter a positive number")
-    except valueError :
+    except ValueError:
+
         print("your input is not a valid number")
 user_input = input("hey input some data and i will convert it to hours\n")
 validate_and_execute()
