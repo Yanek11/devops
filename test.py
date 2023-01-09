@@ -26,6 +26,8 @@ def validate_and_execute():  # function is used to check if the input is a digit
             print(calculated_value)
         elif user_input_number == 0:
             print("you entered a 0, enter a positive number")
+        else:
+            print("you entered a negative number, no conversion for you")
     except ValueError:
         print("your input is not a valid number")
 
