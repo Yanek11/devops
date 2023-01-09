@@ -14,7 +14,7 @@ if user_input.isdigit():
 else:
     print("your input was not a number")
 """
-
+change made on SII  laptop
 
 def validate_and_execute():  # function is used to check if the input is a digit, float or string
     try:  # try/except is used to check  several lines for errors. if you cannot use IF...ELSE statement
