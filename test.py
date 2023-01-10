@@ -36,7 +36,7 @@ def validate_and_execute():  # function is used to check if the input is a digit
 user_input = ""  # variable needs to be initialized before loop starts, otherwise it will complain and stop
 while user_input != "exit":
     user_input = input("hey input alist as a comma separated list and i will convert it to hours\n")
-    print(type(user_input.split(",")))
+    print(type(user_input.split(",")))  # shows type of the user input converted
     print(user_input.split(","))
     for num_of_days_element in user_input.split(","):  # user input with commas will be converted to list data type
     # for num_of_days_element in user_input.split():  # user input (String) with spaces
