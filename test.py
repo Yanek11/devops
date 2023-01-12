@@ -32,6 +32,7 @@ def validate_and_execute():  # function is used to check if the input is a digit
     except ValueError:
         print("your input is not a valid number")
 
+
 ''' on the first run user_input is evaluated but since user has not typed anything we need to declare an  empty variable '''
 ''' #1 variable needs to be initialized before loop starts, otherwise it will complain and stop. 
 In this case we assign an empty variable '''
@@ -47,7 +48,7 @@ while user_input != "exit":
     print(type(user_input.split(",")))  # shows type of the user input converted
     print(user_input.split(","))
     for num_of_days_element in user_input.split(","):  # user input with commas will be converted to list data type
-            # for num_of_days_element in user_input.split():  # user input (String) with spaces
+        '''     for num_of_days_element in user_input.split():  # user input (String) with spaces '''
 
     ''' #4 function is called and evaluated '''
     validate_and_execute()
