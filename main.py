@@ -378,3 +378,10 @@ while user_input != "exit":
     print(user_input.split(","))
     for num_of_days_element in user_input.split(","):  # user input with commas will be converted to list data type
         validate_and_execute()
+
+# LISTS 24 January 2023
+my_list=["January", 'february', "March"]
+
+# adding to the list
+my_list.append("April111")
+print(my_list[13])
