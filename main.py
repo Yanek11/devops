@@ -377,7 +377,4 @@ while user_input != "exit":
     print(type(user_input.split(",")))  # shows type of the user input converted
     print(user_input.split(","))
     for num_of_days_element in user_input.split(","):  # user input with commas will be converted to list data type
-        '''     for num_of_days_element in user_input.split():  # user input (String) with spaces '''
-
-    ''' #4 function is called and evaluated '''
-    validate_and_execute()
+        validate_and_execute()
