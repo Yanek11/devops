@@ -326,8 +326,10 @@ while user_input != "exit":
     user_input = input("hey input some data and i will convert it to hours\n")
     validate_and_execute()
 
-#  LIST - DATA TYPE
-# using FOR LOOP - it is used to iterate over a sequence / list. then we can execute every element of the list
+"""  
+LIST - DATA TYPE
+using FOR LOOP - it is used to iterate over a sequence / list. then we can execute every element of the list 
+"""
 
 calculation_to_units = 24
 name_of_unit = "hours"  # this variable is GLOBAL
@@ -361,9 +363,9 @@ def validate_and_execute():  # function is used to check if the input is a digit
         print("your input is not a valid number")
 
 
-''' on the first run user_input is evaluated but since user has not typed anything we need to declare an  empty variable '''
-''' #1 variable needs to be initialized before loop starts, otherwise it will complain and stop. 
-In this case we assign an empty variable '''
+""" on the first run user_input is evaluated but since user has not typed anything we need to declare an  empty variable 
+#1 variable needs to be initialized before loop starts, otherwise it will complain and stop. 
+In this case we assign an empty variable """
 user_input = ""
 
 ''' #2 condition gets evaluated 
@@ -371,16 +373,18 @@ as long as "exit" was no typed by a user, the condition is still met and functio
 '''
 while user_input != "exit":
 
-    ''' #3 user is asked for an input '''
-    user_input = input("hey input alist as a comma separated list and i will convert it to hours\n")
+    """ 3. user is asked for an input """
+    user_input = input("hey input number of days as a comma separated list and i will convert it to hours\n")
     print(type(user_input.split(",")))  # shows type of the user input converted
     print(user_input.split(","))
-    for num_of_days_element in user_input.split(","):  # user input with commas will be converted to list data type
-         validate_and_execute()
+    for num_of_days_element in user_input.split(","):  # condition is implicit
+        validate_and_execute()  # this needs to be indented for "FOR LOOP" logic
 
-# LISTS 24 January 2023
+# LISTS 24,28 January 2023
 my_list=["January", 'february', "March"]
 
 # adding to the list
 my_list.append("April111")
-print(my_list[13])
+print(my_list[3])
+print(my_list)
+
