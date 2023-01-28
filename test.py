@@ -44,9 +44,12 @@ while user_input != "exit":
 
     """ 3. user is asked for an input """
     user_input = input("hey input number of days as a comma separated list and i will convert it to hours\n")
-    print(type(user_input.split(",")))  # shows type of the user input converted
-    print(user_input.split(","))
-    for num_of_days_element in set(user_input.split(",")):  # condition is implicit
+    list_of_days=user_input.split(",")
+    print(list_of_days)  # shows type of the user input converted
+    print(set(list_of_days))
+    print(type(list_of_days))
+    print(type(set(list_of_days))) # nested function. executions from inner most function to the outer most function
+    for num_of_days_element in set(list_of_days):  # condition is implicit
         validate_and_execute()  # this needs to be indented for "FOR LOOP" logic
 """ output
 1,11,1
