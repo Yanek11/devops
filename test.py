@@ -47,5 +47,5 @@ while user_input != "exit":
     user_input = input("hey input alist as a comma separated list and i will convert it to hours\n")
     print(type(user_input.split(",")))  # shows type of the user input converted
     print(user_input.split(","))
-    for num_of_days_element in user_input.split(","):  # user input with commas will be converted to list data type
-         validate_and_execute()
+    for num_of_days_element in user_input.split(","):  # condition is implicit
+         validate_and_execute()  # this needs to be indented for "FOR LOOP" logic
