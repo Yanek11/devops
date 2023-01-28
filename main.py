@@ -326,7 +326,6 @@ while user_input != "exit":
     user_input = input("hey input some data and i will convert it to hours\n")
     validate_and_execute()
 
-
 #  LIST - DATA TYPE
 # using FOR LOOP - it is used to iterate over a sequence / list. then we can execute every element of the list
 
@@ -377,7 +376,7 @@ while user_input != "exit":
     print(type(user_input.split(",")))  # shows type of the user input converted
     print(user_input.split(","))
     for num_of_days_element in user_input.split(","):  # user input with commas will be converted to list data type
-        validate_and_execute()
+         validate_and_execute()
 
 # LISTS 24 January 2023
 my_list=["January", 'february', "March"]
