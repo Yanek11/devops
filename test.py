@@ -53,5 +53,5 @@ while user_input != "exit":
 <class 'list'>
 ['1', '11', '1']
 11 days are 264 hours
-1 days are 24 hours
+1 days are 24 hours 
 """
