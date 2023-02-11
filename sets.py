@@ -24,16 +24,21 @@ def validate_and_execute():  # function is used to check if the input is a digit
 user_input = ""
 while user_input != "exit":
 
+    # comment
+
+
     user_input = input("hey input number of days as a comma separated list and i will convert it to hours\n")
     list_of_days=user_input.split(",") # defining a variable to make code more efficient
     print(list_of_days)  # shows type of the user input converted
     print(set(list_of_days))
     print(type(list_of_days))
-    print(type(set(list_of_days)))  '''  Nested Function: gets executed from inside out 
+    print(type(set(list_of_days)))
+    '''  Nested Function: gets executed from inside out 
     1. set(list_of_days) - function SET is executed on users input array. output is converted set with no duplicates
-    2. 
-                                        '''
-    for num_of_days_element in list_of_days:  # condition is implicit
+    2. type(set(list_of_days)) - function TYPE is executed on value of previous function. Input - converted SET
+    3. print(type(set(list_of_days))) - function PRINT is executed on a result of previous function TYPE. 
+        Input - data type. Output - prints values to the console                                       '''
+    for num_of_days_element in set(list_of_days):  # condition is implicit
         validate_and_execute()  # this needs to be indented for "FOR LOOP" logic
 
 
