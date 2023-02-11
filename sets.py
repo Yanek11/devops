@@ -1,4 +1,4 @@
-# SET  28 January 2023
+# SET s 28 January 2023
 my_set = {"January", "March", "February", "January"}
 
 my_set.add("April") # adding
