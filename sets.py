@@ -7,6 +7,7 @@ name_of_unit = "hours"  # this variable is GLOBAL
 def days_to_units(num_of_days):
     return f"{num_of_days} days are {num_of_days * calculation_to_units} {name_of_unit}"
 
+
 def validate_and_execute():  # function is used to check if the input is a digit, float or string
     try:  # try/except is used to check  several lines for errors. if you cannot use IF...ELSE statement
         user_input_number = int(num_of_days_element)
@@ -26,9 +27,8 @@ while user_input != "exit":
 
     # comment
 
-
     user_input = input("hey input number of days as a comma separated list and i will convert it to hours\n")
-    list_of_days=user_input.split(",") # defining a variable to make code more efficient
+    list_of_days = user_input.split(",")  # defining a variable to make code more efficient
     print(list_of_days)  # shows type of the user input converted
     print(set(list_of_days))
     print(type(list_of_days))
@@ -41,16 +41,14 @@ while user_input != "exit":
     for num_of_days_element in set(list_of_days):  # condition is implicit
         validate_and_execute()  # this needs to be indented for "FOR LOOP" logic
 
-
-
-
-''' second part of SETS '''
+''' second part of SETS 
+no access to SETS via index like with lists
+'''
 
 my_set = {"January", "March", "February", "January"}
-
 my_set.add("April")  # adding
-# for element in my_set:
-print(my_set)
+for element in my_set:
+    print(my_set)
 
 my_set.remove("January")  # removing both occurrences of January
 print(my_set)
