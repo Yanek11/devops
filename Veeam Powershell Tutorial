@@ -68,8 +68,45 @@ Start-VBRJob -Job $job
 
 8. 
 Backup validatation - Veeam Backup Validator
-	
-Veeam.Backup.Validator.exe /file:"C:\Backup\Backup Job Single Storage\Backup Job Single StorageD2022-10-03T132735_1E50.vbk" /file:"C:\Backup\Backup Job Single Storage\Backup Job Single StorageD2022-10-28T122338_3EE4.vib" /vmname:winsrv29 /report:"C:\report.html"
+
+# checking if VBV is showing in PATH env variable
+$env:Path -split ';'
+
+# adding "Veeam Backup Validator" location to a PATH variable
+GUI
+'%ProgramFiles%\Veeam\Backup and Replication\Backup'
+
+CMD
+
+Veeam.Backup.Validator /backup:"Test 03  Backup" /vmname:"Srv-03"
+this command fails and it is a known bug
+
+PS
+
+solution is to use a PS script as per VEEAM article
+https://www.veeam.com/kb4485
+
+#Get backup job information based on name.
+$backup = Get-VBRBackup -Name "Test 03  Backup"
+#Find child backups for job.
+$child_backups = $backup.FindChildBackups()
+#For each child backup found validate the latest restore point, output the results to an HTML file in C:\temp\
+ForEach ($sub_child in $child_backups) {
+	$id = $sub_child.Id
+	$name = $sub_child.name
+	Write-Output "Processing VM $name $id"
+	cmd.exe /c '"C:\Program Files\Veeam\Backup and Replication\Backup\Veeam.Backup.Validator.exe" /backup:'$id' /report:"C:\temp\report_'$name'-'$(get-date -f yyyy-MM-dd_HH.mm)'.html" /format:html'
+}
+
+9.
+Recovery / Restore
+
+$restorepoint = Get-VBRRestorePoint
+$server="vmware.kakaka.store" 
+$vm="Srv-03"
+
+Start-VBRRestoreVM –RestorePoint $restorepoint[1] –Server $server -VMName $vm –PowerUp $false
+
 
 Overview:
 
@@ -79,11 +116,51 @@ add to AD
 create a new folder Desktop\to_be_restored
 PS: create backup job and schedule
 PS: run backup
-PS: validate backup - Veeam Backup Validator
+PS: validate backup - Veeam Backup Validator - via PS script (Veeam KB)
 delete folder Desktop\to_be_restored
 PS: restore backup 
 verify if folder is restored
 
 
 
+
+### Test backup and restore for a VM called "vm_dummy" ###
+
+## Creating backup job ##
+
+$vm="vm_dummy"
+$backup_job="backup_vm_dummy2"
+$Repository = "RepoDemo"
+Find-VBRViEntity -Name $vm | Add-VBRViBackupJob -Name $backup_job -BackupRepository $Repository -Description "Backup vm dummy"
+
+## Schedule ## 
+Set-VBRJobSchedule -Job $backup_job -Daily -At "23:01" -DailyKind Weekdays
+
+## Enabling / Activating ## 
+Enable-VBRJobSchedule -Job $backup_job
+
+## Running a backup job ## 
+Start-VBRJob -Job $backup_job
+
+## Get backup job information based on name.
+$backup = Get-VBRBackup -Name $backup_job
+
+## Validating ##
+## Finding child backups ##
+$child_backups = $backup.FindChildBackups()
+
+## For each child backup found validate the latest restore point, output the results to an HTML file in C:\temp\ ##
+ForEach ($sub_child in $child_backups) {
+	$id = $sub_child.Id
+	$name = $sub_child.name
+	Write-Output "Processing VM $name $id"
+	cmd.exe /c '"C:\Program Files\Veeam\Backup and Replication\Backup\Veeam.Backup.Validator.exe" /backup:'$id' /report:"C:\temp\report_'$name'-'$(get-date -f yyyy-MM-dd_HH.mm)'.html" /format:html'
+}
+
+## Restoring backups ##
+$restorepoint = Get-VBRRestorePoint
+$server="vmware.kakaka.store" 
+
+# VM Restore from most recent backup
+Start-VBRRestoreVM –RestorePoint (Get-VBRRestorePoint -Name $vm | Sort-Object –Property CreationTime –Descending | Select-Object -First 1) –Server $server -VMName $vm –PowerUp $false
 
