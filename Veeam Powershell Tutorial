@@ -1,1 +1,89 @@
+VEEAM Powershell
+
+$PSVersionTable
+get-Module -Name Veeam.Backup.PowerShell -ListAvailable
+
+Infrastructure
+
+1. add Credentials - GUI 
+
+2. Add VMware ESXi hosts using the account user name and password
+
+PS:
+Find-VBRViEntity |ft -AutoSize
+Find-VBRViEntity -Name "Hosts and Clusters"
+
+Get-VBRCredentials -Name kk-admin
+
+Add-VBRESXi -Name vmware.kakaka.store -Credentials kk-admin
+
+Find-VBRViEntity |ft -AutoSize
+
+3.
+Adding / formatting backup disks/volumes
+
+### Initiliazing
+
+# Single disk 
+get-disk 
+
+$diskNumber=1
+Clear-Disk -Number $diskNumber -RemoveData
+Initialize-Disk -Number $diskNumber -PartitionStyle GPT -Confirm:$false
+New-Partition -DiskNumber $diskNumber -DriveLetter X -UseMaximumSize
+Format-Volume -DriveLetter X -FileSystem NTFS -NewFileSystemLabel "volBackup" -Confirm:$false 
+New-Item -ItemType Directory -Path x:\Backup 
+
+4.
+Adding repository
+
+get-VBRBackupRepository
+
+$server = "Backup-veeam"
+Add-VBRBackupRepository -Name "RepoDemo" -Server $server -Folder "x:\Backup" -Type WinLocal
+get-VBRBackupRepository
+
+5.
+Adding backup jobs
+$Repository = "RepoDemo"
+
+Find-VBRViEntity -Name "Srv-03" | Add-VBRViBackupJob -Name "Test 03  Backup" -BackupRepository $Repository -Description "Test 03 Backup"
+
+
+6. 
+Daily schedule and enable backup job
+
+$job = Get-VBRJob -Name "Test 03  Backup"
+Get-VBRJobScheduleOptions -Job $job
+Set-VBRJobSchedule -Job $job -Daily -At "23:00" -DailyKind Weekdays
+Enable-VBRJobSchedule -Job $job
+
+### OPTIONAL 
+Remove-VBRJob -Job $job
+### OPTIONAL 
+
+7. first run 
+
+Start-VBRJob -Job $job
+
+8. 
+Backup validatation - Veeam Backup Validator
+	
+Veeam.Backup.Validator.exe /file:"C:\Backup\Backup Job Single Storage\Backup Job Single StorageD2022-10-03T132735_1E50.vbk" /file:"C:\Backup\Backup Job Single Storage\Backup Job Single StorageD2022-10-28T122338_3EE4.vib" /vmname:winsrv29 /report:"C:\report.html"
+
+Overview:
+
+Test VM SRV-03
+create VM
+add to AD
+create a new folder Desktop\to_be_restored
+PS: create backup job and schedule
+PS: run backup
+PS: validate backup - Veeam Backup Validator
+delete folder Desktop\to_be_restored
+PS: restore backup 
+verify if folder is restored
+
+
+
 
