@@ -122,19 +122,17 @@ PS: restore backup
 verify if folder is restored
 
 
-
-
-### Test backup and restore for a VM called "vm_dummy" ###
+### Test backup and restore for a VM called "SRV-03" ###
 
 ## Creating backup job ##
 
-$vm="vm_dummy"
-$backup_job="backup_vm_dummy2"
+$vm="srv-03"
+$backup_job="backup_vm_srv_03"
 $Repository = "RepoDemo"
 Find-VBRViEntity -Name $vm | Add-VBRViBackupJob -Name $backup_job -BackupRepository $Repository -Description "Backup vm dummy"
 
 ## Schedule ## 
-Set-VBRJobSchedule -Job $backup_job -Daily -At "23:01" -DailyKind Weekdays
+Set-VBRJobSchedule -Job $backup_job -Daily -At "23:03" -DailyKind Weekdays
 
 ## Enabling / Activating ## 
 Enable-VBRJobSchedule -Job $backup_job
@@ -162,29 +160,33 @@ $restorepoint = Get-VBRRestorePoint
 $server="vmware.kakaka.store" 
 
 # VM Restore from most recent backup
-Start-VBRRestoreVM –RestorePoint (Get-VBRRestorePoint -Name $vm | Sort-Object –Property CreationTime –Descending | Select-Object -First 1) –Server $server -VMName $vm –PowerUp $false
+# most recent backup for dummy VM
+Get-VBRRestorePoint -Name $vm | Sort-Object –Property CreationTime –Descending | Select-Object -First 1
+
+Start-VBRRestoreVM –RestorePoint (Get-VBRRestorePoint -Name $vm | Sort-Object –Property CreationTime –Descending | Select-Object -First 1) –Server $server -VMName $vm –PowerUp $true
 
 
-# Backup jobs stats, file locations
-Get-VBRJob | ?{$_.JobType -eq "Backup"} | %{
-    
-    $job = $_
-    $JobName = $_.Name 
-    $Backup = Get-VBRBackup -Name $JobName
-    if ($Backup -eq $null) {
-        $BackupName = $JobName.Remove(7,4)
-        $Backup = Get-VBRBackup -Name $BackupName    }
-    else {
-    $lastsession = $job.FindLastSession()
-    $Session = $job.FindLastSession()
-    foreach($tasksession in $lastsession.GetTaskSessions()) {
-    $PointsOnDisk = (get-vbrbackup -Name $job.Name | Get-VBRRestorePoint -Name $tasksession.Name | Measure-Object).Count 
-    $BackupTotalSize = [math]::round($Session.Info.Progress.TotalUsedSize/1Gb,2)
-    $BackupSize = [math]::round($Session.Info.BackedUpSize/1Gb,2)
-    $RepositoryPath = $Backup.Info.DirPath.ToString()
-    $LastBackupStart = $Session.CreationTime
-    $LastResult = $job.GetLastResult()
-    }
-	$_ | Get-VBRJobObject | ?{$_.Object.Type -eq "VM"} | Select @{ L="Job"; E={$JobName}}, Name, @{ L="Size"; E={$_.ApproxSizeString}}, @{ L="PointsOnDisk"; E={$PointsOnDisk}}, @{ L="LastResult"; E={$LastResult}}, @{ L="LastBackupStart"; E={$LastBackupStart}}, @{ L="LastBackupTotalSize"; E={$BackupTotalSize}}, @{ L="LastBackupSize"; E={$BackupSize}}, @{ L="RepositoryPath"; E={$RepositoryPath}} | Sort -Property Job, Name
-}
-}
+# after restore, VM needs to be re-added to the backup job
+
+## removing
+$backup = Get-VBRBackup -Name $backup_job
+$jobobject = Get-VBRJobObject -Job $backup_job -Name $vm 
+Remove-VBRJobObject -Objects $jobobject
+
+## adding
+$vm = Find-VBRViEntity -name $vm
+Add-VBRViJobObject -Job $backup_job -Entities $vm
+
+## Running a backup job with a newly restored VM ## 
+Start-VBRJob -Job $backup_job
+
+
+########### DANGER ZONE ########### 
+
+
+deleting all backups
+$backup = Get-VBRBackup -Name "*"
+Remove-VBRBackup -Backup $backup -FromDisk
+Remove-VBRBackup -Backup $backup
+
+
