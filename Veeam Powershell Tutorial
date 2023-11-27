@@ -59,13 +59,21 @@ Set-VBRJobSchedule -Job $job -Daily -At "23:00" -DailyKind Weekdays
 Enable-VBRJobSchedule -Job $job
 
 ### OPTIONAL 
-Remove-VBRJob -Job $job
+
+# remove backup job "Test 03 backup"
+get-VBRBackup -Name *03* | Remove-VBRBackup 
+
+# remove backups from disk
+$backup = Get-VBRBackup -Name "*"
+Remove-VBRBackup -Backup $backup -FromDisk
+	
+
 ### OPTIONAL 
 
 7. first run 
-
+$job="Test 03  Backup"
 Start-VBRJob -Job $job
-
+Get-VBRJob -Name "Test 03  Backup" | Start-VBRJob
 8. 
 Backup validatation - Veeam Backup Validator
 
@@ -98,6 +106,9 @@ ForEach ($sub_child in $child_backups) {
 	cmd.exe /c '"C:\Program Files\Veeam\Backup and Replication\Backup\Veeam.Backup.Validator.exe" /backup:'$id' /report:"C:\temp\report_'$name'-'$(get-date -f yyyy-MM-dd_HH.mm)'.html" /format:html'
 }
 
+
+
+
 9.
 Recovery / Restore
 
@@ -105,7 +116,37 @@ $restorepoint = Get-VBRRestorePoint
 $server="vmware.kakaka.store" 
 $vm="Srv-03"
 
+# Full VM Restore
+
 Start-VBRRestoreVM –RestorePoint $restorepoint[1] –Server $server -VMName $vm –PowerUp $false
+
+
+Overview:
+
+test VM -> SRV-03
+GUI: create VM
+GUI: add to AD
+GUI: create a new folder Desktop\to_be_restored
+PS: create backup job and schedule
+PS: run backup
+PS: validate backup - Veeam Backup Validator - via PS script (Veeam KB)
+GUI: delete folder Desktop\to_be_restored
+PS: restore backup 
+GUI: verify if folder is restored
+PS: backup job will fail if ran after restore
+PS: VM to be re-added
+PS: run backup again
+
+
+
+
+
+
+
+
+
+
+
 
 
 Overview:
@@ -189,6 +230,7 @@ Remove-VBRBackup -Backup $backup
 ########### DANGER ZONE ########### 
 
 
+########### Listing all VMs and backup jobs ########### 
 
 Get-VBRJob | ?{$_.JobType -eq "Backup"} | %{
     
