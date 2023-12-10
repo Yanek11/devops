@@ -1,1 +1,52 @@
 
+Migrating your Exchange environment from on-premises to Azure is achievable. You can create a highly available and secure email infrastructure in Azure using Exchange Server deployed on Azure Virtual Machines. See next steps:
+
+1- Create a virtual network in Azure:
+Set up a virtual network in Azure and connect it to your on-premises network using a VPN
+gateway or an ExpressRoute connection. This will ensure that your on-premises and Azure
+environments are securely connected and can communicate with each other.
+
+2- Deploy Active Directory Domain Controllers in Azure:
+Deploy at least two Active Directory Domain Controllers in Azure, preferably in different
+availability zones, to ensure high availability. Make sure that the Domain Controllers are synced
+with your on-premises Active Directory infrastructure.
+
+3- Deploy Exchange Servers in Azure:
+Deploy Exchange Server instances on Azure Virtual Machines, following the best practices and
+recommended VM sizes for Exchange Server. Deploy the Exchange Servers across multiple
+availability zones to ensure high availability.
+
+4- Configure Azure Load Balancer:
+Set up an Azure Load Balancer to distribute traffic among the Exchange Servers. This will
+ensure that incoming traffic is distributed evenly and efficiently across the available Exchange
+Server instances.
+
+5- Configure SMTP Relay:
+Since port 25 is blocked by default in Azure, you'll need to use a third-party SMTP relay
+service, such as SendGrid, Mailjet, or another SMTP relay service of your choice, to send
+outbound email from your Exchange Servers in Azure. Configure the SMTP relay service
+according to the provider's documentation and update your Exchange Server settings to route
+outbound email through the relay service.
+
+6- Configure DNS settings:
+Update your public DNS records to point to the public IP address of your Azure Load Balancer.
+This will ensure that incoming email is directed to your new Exchange infrastructure in Azure.
+
+7- Configure SSL Certificates:
+Obtain and configure SSL certificates for your Exchange Servers in Azure. This will ensure
+secure communication between your clients and the Exchange Servers.
+
+8- Test the new environment:
+Test the new Exchange environment in Azure to ensure that it's functioning correctly and
+providing the necessary services, including email delivery, mailbox access, and other features.
+
+9- Decommission the on-premises Exchange infrastructure:
+Once you've confirmed that the new Exchange environment in Azure is functioning correctly,
+decommission your on-premises Exchange infrastructure.
+
+10- Monitor and optimize:
+Continuously monitor your new Exchange environment in Azure using Azure Monitor and
+other monitoring tools. Optimize the environment for performance, cost, and security by
+following best practices.
+
+By following these steps, you can create a highly available and secure Exchange environment in Microsoft Azure.
