@@ -6,15 +6,22 @@ Set up a virtual network in Azure and connect it to your on-premises network usi
 gateway or an ExpressRoute connection. This will ensure that your on-premises and Azure
 environments are securely connected and can communicate with each other.
 
+
+
+
 2- Deploy Active Directory Domain Controllers in Azure:
 Deploy at least two Active Directory Domain Controllers in Azure, preferably in different
 availability zones, to ensure high availability. Make sure that the Domain Controllers are synced
 with your on-premises Active Directory infrastructure.
 
+
+
 3- Deploy Exchange Servers in Azure:
 Deploy Exchange Server instances on Azure Virtual Machines, following the best practices and
 recommended VM sizes for Exchange Server. Deploy the Exchange Servers across multiple
 availability zones to ensure high availability.
+
+
 
 4- Configure Azure Load Balancer:
 Set up an Azure Load Balancer to distribute traffic among the Exchange Servers. This will
