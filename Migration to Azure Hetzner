@@ -1,7 +1,8 @@
 
 Migrating your Exchange environment from on-premises to Azure is achievable. You can create a highly available and secure email infrastructure in Azure using Exchange Server deployed on Azure Virtual Machines. See next steps:
 
-1- Create a virtual network in Azure:
+DONE
+1- Create a virtual network in Azure: 
 Set up a virtual network in Azure and connect it to your on-premises network using a VPN
 gateway or an ExpressRoute connection. This will ensure that your on-premises and Azure
 environments are securely connected and can communicate with each other.
