@@ -18,6 +18,8 @@ with your on-premises Active Directory infrastructure.
 
 ### DONE  1x DC - az-dc-01
 
+
+
 3- Deploy Exchange Servers in Azure:
 Deploy Exchange Server instances on Azure Virtual Machines, following the best practices and
 recommended VM sizes for Exchange Server. Deploy the Exchange Servers across multiple
