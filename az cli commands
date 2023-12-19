@@ -1,0 +1,1 @@
+az deployment group create --name addstorage --resource-group  testRG --template-uri "https://raw.githubusercontent.com/Yanek11/devops/main/azuredeploy1.json" 
