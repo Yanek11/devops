@@ -1,0 +1,32 @@
+
+Debian router
+
+WAN/NAT
+enp1s0: 52:54:00:af:12:4d
+    inet 192.168.100.188/24 
+    brd 192.168.100.255 
+    inet 192.168.100.188/24
+
+LAN01
+enp7s0 
+52:54:00:e1:be:11
+1.1.1.254
+
+LAN02
+enp8s0
+52:54:00:2d:69:61
+2.2.2.1
+
+
+### changing IP config ###
+
+sudo nano /etc/network/interfaces
+
+# example
+enp1s0: 52:54:00:af:12:4d
+    inet 192.168.100.188/24 
+    brd 192.168.100.255 
+    inet 192.168.100.188/24
+# example
+
+sudo systemctl restart systemd-networkd.service 
