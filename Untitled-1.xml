@@ -30,3 +30,7 @@ enp1s0: 52:54:00:af:12:4d
 # example
 
 sudo systemctl restart systemd-networkd.service 
+
+
+ISO image USB
+sudo dd bs=4M if=~/Downloads/debian-12.8.0-amd64-netinst.iso of=/dev/sda1 status=progress oflag=sync
