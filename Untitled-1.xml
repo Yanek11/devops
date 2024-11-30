@@ -26,7 +26,7 @@ sudo nano /etc/network/interfaces
 enp1s0: 52:54:00:af:12:4d
     inet 192.168.100.188/24 
     brd 192.168.100.255 
-    inet 192.168.100.188/24
+    inet 192.168.100.188/24m,
 # example
 
 sudo systemctl restart systemd-networkd.service 
@@ -34,3 +34,26 @@ sudo systemctl restart systemd-networkd.service
 
 ISO image USB
 sudo dd bs=4M if=~/Downloads/debian-12.8.0-amd64-netinst.iso of=/dev/sda1 status=progress oflag=sync
+
+
+diff iptables1 iptables2
+
+
+IPTABLES - router configuration
+
+
+iptables --flush            # Flush all the rules in filter and nat tables
+
+# Set up IP FORWARDing and Masquerading
+
+iptables --table nat --append POSTROUTING --out-interface INT_WAN -j MASQUERADE
+
+iptables --append FORWARD --in-interface INT_LAN -j ACCEPT
+
+# Enables packet forwarding by kernel 
+
+# "sh -c" runs shell and allows to execute file redirection
+sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+
+ #Apply the configuration
+sudo netfilter-persistent save
