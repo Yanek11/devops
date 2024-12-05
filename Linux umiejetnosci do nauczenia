@@ -1,0 +1,58 @@
+Linux:
+
+SSL / SSH
+TCPdump
+DNS
+DHCP
+FIREWALL
+STORAGE
+BACKUP
+HA
+PATCHING
+SCRIPTing
+
+NGINX
+
+FREEBSD ???
+
+########################################
+
+PATCH MANAGEMENT
+
+SHELL/BASH  -skrypty. Automate processes using scripting languages, including shell scripting
+
+HA
+
+ZABBIX
+
+REDHAT / CENTOS
+
+DOCKER
+
+
+miejętność pisania skryptów automatyzujących w shell(bash, ksh), python, prel
+
+Znajomość narzędzi do automatyzacji (terraform, ansible )
+
+Znajomość narzędzi monitorowania infrastruktury i systemów ( Zabbix, ELK stack )
+
+high availability/load balancing
+
+RedHat, CentOS, Openshift, Bash, Tomcat,
+
+
+Core Requirement: Kubernetes
+Containerization: Docker
+Automation Tools: Ansible
+Scripting Languages: Python, Bash
+
+
+# Junior
+Configure, monitor, and troubleshoot virtualized server environments
+Automate processes using scripting languages, including shell scripting
+Implement and oversee patch management processes for system security
+Monitor and manage IP protocols to optimize network performance
+Collaborate on system upgrades and enhancements to improve functionality
+HA
+Familiarity with patch management practices and related tools
+Administracja serwerami aplikacyjnymi i WWW (APACHE, nginx, TOMCAT, JBOSS, WEBLOGIC)

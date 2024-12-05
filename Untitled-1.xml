@@ -39,21 +39,29 @@ sudo dd bs=4M if=~/Downloads/debian-12.8.0-amd64-netinst.iso of=/dev/sda1 status
 diff iptables1 iptables2
 
 
-IPTABLES - router configuration
+### enabling NAT and IP routing
 
+# edit /etc/sysctl.conf and uncomment the following line:
 
-iptables --flush            # Flush all the rules in filter and nat tables
+## Uncomment to enable IP forwarding
+net.ipv4.ip_forward=1 
 
-# Set up IP FORWARDing and Masquerading
+## applying sysctl.conf
+sudo sysctl -p /etc/sysctl.conf
 
-iptables --table nat --append POSTROUTING --out-interface INT_WAN -j MASQUERADE
+# if not installed
+sudo apt install iptables-persistent
 
-iptables --append FORWARD --in-interface INT_LAN -j ACCEPT
+# enabling IP masquerade and NAT
+sudo iptables --table nat --append POSTROUTING --out-interface enp1s0 -j MASQUERADE
 
-# Enables packet forwarding by kernel 
+# list current NAT rules
+sudo iptables -t nat -L -n -v
+or
+sudo iptables -S
 
-# "sh -c" runs shell and allows to execute file redirection
-sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+# saving iptables rules
+sudo sh -c "iptables-save > /etc/iptables/rules.v4"
 
- #Apply the configuration
-sudo netfilter-persistent save
+# searching for expr in files to check
+grep -rnw '/etc/' -e 'ip_forward'
