@@ -65,3 +65,17 @@ sudo sh -c "iptables-save > /etc/iptables/rules.v4"
 
 # searching for expr in files to check
 grep -rnw '/etc/' -e 'ip_forward'
+
+# repeating command every 5 secs
+ssh kk@1.1.1.1
+until !!; do sleep 5 ; done
+
+until ssh kk@1.1.1.1; do sleep 5 ; done
+
+
+### DNS - BIND NAMED ### 
+
+
+
+# checking if PTR is OK
+sudo named-checkzone 1.1.1.in-addr.arpa /etc/bind/zones/master/db.1.1.1
