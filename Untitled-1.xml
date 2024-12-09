@@ -95,3 +95,24 @@ while sleep 3; do
 done
 
 while sleep 3; do    top -b -n1 | grep sshd >> top-output.txt;echo "recording";echo "new line" >>top-output.txt ; done
+
+# bulk creation of multiple folders with specific name  pattern  
+
+mkdir Photos
+[me@linuxbox ~]$ cd Photos
+[me@linuxbox Photos]$ mkdir {2007..2009}-{01..12}
+[me@linuxbox Photos]$ ls
+2007-01 2007-07 2008-01 2008-07 2009-01 2009-07
+2007-02 2007-08 2008-02 2008-08 2009-02 2009-08
+2007-03 2007-09 2008-03 2008-09 2009-03 2009-09
+2007-04 2007-10 2008-04 2008-10 2009-04 2009-10
+2007-05 2007-11 2008-05 2008-11 2009-05 2009-11
+2007-06 2007-12 2008-06 2008-12 2009-06 2009-12
+
+# file properties of cp command 
+ls -l $(which cp)
+
+# properties of files/folders located under /usr/bin with zip in their names
+file $(ls -d /usr/bin/* |grep zip)
+
+
