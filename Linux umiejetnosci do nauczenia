@@ -1,33 +1,56 @@
+Basic Linux skills 
+
+Navigating the system’s directories and filing system
+Manipulating files in the Linux shell
+User permission configuration
+Package installation and software management 
+Ability to identify and apply different filesystem types
+Using Linux commands for process management
+Basic troubleshooting and debugging
+
+
+
+
 Linux:
 
-SSL / SSH
-TCPdump
-DNS
+ZABBIX
+ANSIBLE
+MYSQL
+NGINX
+SSL
+
 DHCP
 FIREWALL
+SSH
+DNS
+BASH
+
+########################################
+
+TCPdump
 STORAGE
 BACKUP
 HA
 PATCHING
-SCRIPTing
-
-NGINX
-
-FREEBSD ???
-
-########################################
-
-PATCH MANAGEMENT
-
 SHELL/BASH  -skrypty. Automate processes using scripting languages, including shell scripting
-
-HA
-
-ZABBIX
-
 REDHAT / CENTOS
-
 DOCKER
+
+# pracuj pl SKILLS list
+
+Zabbix
+Nginx
+Apache
+DNS
+Bash
+
+
+MySQL
+MariaDB
+PostgreSQL
+
+
+
 
 
 miejętność pisania skryptów automatyzujących w shell(bash, ksh), python, prel
