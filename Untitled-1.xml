@@ -64,7 +64,7 @@ sudo iptables -S
 sudo sh -c "iptables-save > /etc/iptables/rules.v4"
 
 # searching for expr in files to check
-grep -rnw '/etc/' -e 'ip_forward'
+grep -rnw '/etc/' -e 'ip_forward'j
 
 # repeating command every 5 secs
 ssh kk@1.1.1.1
@@ -115,4 +115,21 @@ ls -l $(which cp)
 # properties of files/folders located under /usr/bin with zip in their names
 file $(ls -d /usr/bin/* |grep zip)
 
+# Debian replacement for syslog
+journalctl -u syslog
 
+# creating HOME dir for existing user
+mkhomedir_helper username
+
+
+# running ping in background output to file ping1, session logged out, monitoring the ping results (ping1) via another
+session
+
+# START
+login session 1
+ping 8.8.8.8 > ping1  &
+logout
+
+login session  2
+while sleep 10 ;do tail -n 1 ping 1;done
+# END
