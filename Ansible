@@ -1,3 +1,38 @@
+### ANSIBLE ###
+
+# SSH config #
+# Generate the ssh key on the master node:
+root@master:~# ssh-keygen -t rsa -C "main_router SSH key"
+
+#Then copy your public key to the servers with ssh-copy-id:
+root@master:~# ssh-copy-id kk@deb01
+root@master:~# ssh-copy-id kk@deb02
+
+# Inventory #
+# inventory.yaml
+
+myhosts:
+ hosts:
+  deb01:
+   ansible_host: 1.1.1.1
+  deb02:
+   ansible_host: 2.2.2.1
+
+
+# Playbook #
+playbook.yaml
+
+- name: My first
+  hosts: myhosts
+  tasks:
+  - name: ping my hosts
+    ansible.builtin.ping:
+
+  - name: Print message
+    ansible.builtin.debug:
+     msg: Hello
+
+
 --- # optional start ofthe YAML  file
 # dictionary 1
 konrad:
@@ -106,4 +141,105 @@ tasks:
  - name: Print records
    ansible.builin.debug:
     msg: "User {{ item.key }} is {{ item.value.name }} ({{ item.value.name}})"
-   loop: "{{ lookup('ansible.builtin.dict', users) }}" 
+   loop: "{{ lookup('ansible.builtin.dict', users)}}" 
+...
+
+ansible-playbook list2.yaml -i inventory2.yaml -k -vvv
+
+# region ### "TEORIA" ###
+
+#region # GROUPS #
+
+# groups within groups
+
+[nashville]
+host1
+host2
+
+[atlanta]
+host3
+host4
+
+[south:children]
+atlanta
+nashville
+host5
+#endregion # GROUPS #
+
+# region # PLAYBOOK #
+
+# playbook.yaml #
+
+---
+- name: installation apache
+  hosts: web
+  become: yes
+
+  tasks:
+    - name: httpd is present
+       yum:
+        name: httpd
+        state: latest
+    - name: latests index is present
+      template: 
+       src: files/temp.html
+       dest: /var/www/html
+    - name: httpd started
+      service: 
+       name: httpd
+       state: started
+
+#endregion PLAYBOOK
+
+"item potency" -Ansible knows what the state of the item should be 
+
+#region Ansible Basics #
+
+# variables/copy
+https://rhtapps.redhat.com/promo/course/do007?segment=5
+
+
+practice following 
+
+1. variables
+
+2. system configuration
+ansible -m setup localhost |grep \"ipv4\" -A1
+
+3. 
+4.59 minute
+8.00 minute COPY
+
+# constructs #
+https://rhtapps.redhat.com/promo/course/do007?segment=6
+
+# conditions
+---
+- name: variable playbook test
+  hosts: localhost
+  
+  tasks:
+  - name: Install apache
+    apt:
+      name: apache2
+      state: latest
+    when: ansible_distribution == 'Debian' or
+          ansible_distribution == 'Ubuntu'
+  
+  - name: Install httpd
+    yum:
+      name: httpd
+      state: latest
+    when: ansible_distribution == 'RedHat'
+...
+
+
+1.
+1.23m
+
+
+#endregion Ansible Basics #
+
+
+#endregion ### "TEORIA" ###
+
