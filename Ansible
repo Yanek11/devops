@@ -1,4 +1,7 @@
 ### ANSIBLE ###
+link to Ansible books
+https://mega.nz/folder/McoVmDTD#-gax2JDNcsc1eMV53GXzvg
+
 
 # SSH config #
 # Generate the ssh key on the master node:
@@ -9,9 +12,7 @@ root@master:~# ssh-copy-id kk@deb01
 root@master:~# ssh-copy-id kk@deb02
 
 # Inventory #
-# inventory.yaml
-
-myhosts:
+# inventory.yamlhttps://mega.nz/folder/McoVmDTD#-gax2JDNcsc1eMV53GXzvg
  hosts:
   deb01:
    ansible_host: 1.1.1.1
