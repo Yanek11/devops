@@ -373,10 +373,19 @@ sudo find / -type f -name "*VagrantVMs*.vbox*" 2>/dev/null | while IFS= read -r 
   sudo find  / -type d -name \.vagrant\.d 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo ls -las "$file"; done
 sudo find  / -type d -name \.vagrant\.d 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo rm -rd "$file"; done
 
+#  listing and deleting vagrant/VirtualBox VMDK files
+  #listing
+  sudo find / -type f -name "*vmdk" 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo ls -las "$file"; done
+  #deleting
+  sudo find / -type f -name "*vmdk" 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo rm "$file"; done
+
+
+
+
 
 
 # checking if virtualization is enabled
-sudo lsmod |grep kvm 
+  sudo lsmod |grep kvm 
 echo 'blacklist kvm-amd' >> /etc/modprobe.d/blacklist.conf
 
 
@@ -385,3 +394,5 @@ sudo apt install virtualbox
 
 # https://developer.hashicorp.com/vagrant/docs/installation
 sudo apt install vagrant
+
+
