@@ -6,7 +6,7 @@ enp1s0:  52:54:00:ba:eb:04
     inet 192.168.100.188/24 
     brd 192.168.100.255 
     inet 192.168.100.188/24
-
+ 
 LAN01
 enp7s0 
 52:54:00:59:a3:9b
@@ -50,6 +50,9 @@ address 2.2.2.254
 netmask 255.255.255.0
 dns-nameserver 2.2.2.254
 
+# example
+
+sudo systemctl restart systemd-networkd.service 
 
 ###
 
@@ -128,6 +131,10 @@ sudo iptables -A POSTROUTING -d 1.1.1.254 -o enp7s0 -p tcp --dport 22 -j SNAT --
 
 # IP: showing info on interfaces with and without IP address assigned
  addr show | awk '{print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49,$50,$51,$52,$53,$54,$55,$56,$57,$58,$59,$60,$61,$62,$63,$64,$65,$66,$67,$68,$69,$70,$71,$72,$73,$74,$75,$76,$77,$78,$79,$80}'
+
+
+# DIFF / SDIFF command #
+diff --side-by-side ~/.ssh/known_hosts ~/.ssh/known_hosts.old 
 
 # admin commands
 top
@@ -285,6 +292,17 @@ playbook.yaml
   - name: Print message
     ansible.builtin.debug:
      msg: Hello
+
+# example ping
+
+~/ansible/hosts.yaml 
+[web]
+1.1.1.1
+[dns]
+deb02.dupa.com
+
+
+ansible  -i  ~/ansible/hosts.yaml all -m  ansible.builtin.ping  
 
 
 
