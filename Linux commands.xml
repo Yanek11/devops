@@ -242,10 +242,43 @@ rm /home/kk/Documents//Videos\ And\ Photos/Canon\ Camera/
 # showing only dirs starting with "/sys"
 mount |awk '{print $3,$1}' |grep ^\/sys\/
 
-# getting info from jpournalctl (instead of syslog). priting all records about DHCP . swapping date columns to putday  before month.  columns 2,1,3,6 and all columns to the right of 6
+# getting info from journalctl (instead of syslog). priting all records about DHCP . swapping date columns to putday  before month.  columns 2,1,3,6 and all columns to the right of 6
 sudo journalctl |tail -n 100 |grep -v sudo |grep dhclient| awk '{printf "%s %s %s ", $2,$1,$3,$6; for (i=6;i<=NF; i++) {printf "%s ",$i};print ""  }' 
-##############################
 
+
+#############
+#region searching for a folder containing whitespace and piping it to "ls" command
+#############
+
+find / -type f -name "*VagrantVMs*" 2>/dev/null | while IFS= read -r file; do
+  sudo ls -las "$file"
+done
+
+output:
+
+" -rw------- 1 root root 3316 sty 11 12:28 '/root/VirtualBox VMs/VagrantVMs_host01_server_1736594701361_9703/VagrantVMs_host01_server_1736594701361_9703.vbox'
+4 -rw------- 1 root root 3316 sty 11 12:26 '/root/VirtualBox VMs/VagrantVMs_host01_server_1736594701361_9703/VagrantVMs_host01_server_1736594701361_9703.vbox-prev'
+"
+
+Explanation:
+
+find / -type f -name "*VagrantVMs*" 2>/dev/null:
+
+Searches the entire filesystem (/) for files (-type f) whose names contain the string "VagrantVMs".
+2>/dev/null redirects standard error to /dev/null, suppressing any potential error messages from find.
+while IFS= read -r file; do ... done:
+
+Reads each file path returned by find into the file variable.
+IFS= ensures that the input is read correctly, even if it contains spaces.
+-r prevents backslashes from being interpreted as escape characters.
+sudo ls -las "$file":
+
+Executes the ls -las command with sudo for each file, providing detailed information about the file.
+
+
+
+##############################
+#endregion
 
 ##############################
 ANSIBLE
@@ -312,5 +345,10 @@ rm /usr/lib/virtualbox/VBoxHeadless
 \
 sudo apt purge virtualbox
  2087  sudo apt autoremove 
+
+ rm -r VagrantVMs_host01_server_1736595371076_2446
+
+sudo ps axhf |grep virtualbox | grep -v grep
+sudo kill -9 $(ps axhf |grep virtualbox | grep -v grep |awk '{print $1}')
 
 
