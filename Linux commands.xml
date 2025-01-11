@@ -379,6 +379,11 @@ sudo find  / -type d -name \.vagrant\.d 2>/dev/null |grep -v snap -v |grep -v Ya
   #deleting
   sudo find / -type f -name "*vmdk" 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo rm "$file"; done
 
+  # listing/removing Vagrant VMs files
+  #listing
+  sudo find / -type d -name "VagrantVM*" 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo ls -las "$file"; done
+  # deleting
+  sudo find / -type d -name "VagrantVM*" 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo rm -dr "$file"; done
 
 
 
