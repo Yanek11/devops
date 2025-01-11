@@ -284,6 +284,7 @@ playbook.yaml
     ansible.builtin.debug:
      msg: Hello
 
+
 # example ping
 
 ~/ansible/hosts.yaml 
@@ -295,5 +296,21 @@ deb02.dupa.com
 
 ansible  -i  ~/ansible/hosts.yaml all -m  ansible.builtin.ping  
 
+
+
+##############################
+VAGRANT
+##############################
+
+
+# removing vagrant processes
+sudo kill -9 $(ps axhf |grep Headless | grep -v grep |awk '{print $1}')
+
+# removing virtualbox shit
+ ls -las /usr/lib/virtualbox/VBoxHeadless
+rm /usr/lib/virtualbox/VBoxHeadless
+\
+sudo apt purge virtualbox
+ 2087  sudo apt autoremove 
 
 
