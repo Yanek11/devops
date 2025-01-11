@@ -263,10 +263,9 @@ output:
 Explanation:
 
 find / -type f -name "*VagrantVMs*" 2>/dev/null:
-
-Searches the entire filesystem (/) for files (-type f) whose names contain the string "VagrantVMs".
-2>/dev/null redirects standard error to /dev/null, suppressing any potential error messages from find.
-while IFS= read -r file; do ... done:
+find / -type f -name "*VagrantVMs*" 2>/dev/null | while IFS= read -r file; do
+  sudo ls -las "$file"
+donedo ... done:
 
 Reads each file path returned by find into the file variable.
 IFS= ensures that the input is read correctly, even if it contains spaces.
@@ -275,15 +274,9 @@ sudo ls -las "$file":
 
 Executes the ls -las command with sudo for each file, providing detailed information about the file.
 
-
-
-##############################
-#endregion
-
-##############################
-ANSIBLE
-##############################
-
+find / -type f -name "*VagrantVMs*" 2>/dev/null | while IFS= read -r file; do
+  sudo ls -las "$file"
+done
 # SSH config
 Generate the ssh key on the master node:
 
@@ -332,23 +325,63 @@ ansible  -i  ~/ansible/hosts.yaml all -m  ansible.builtin.ping
 
 
 ##############################
-VAGRANT
+VAGRANT / VirtualBox
 ##############################
 
 
 # removing vagrant processes
+sudo apt-get remove --purge virtualbox
+sudo apt-get remove --purge vagrant
+sudo apt autoremove 
+sudo apt autoclean
 sudo kill -9 $(ps axhf |grep Headless | grep -v grep |awk '{print $1}')
 
 # removing virtualbox shit
  ls -las /usr/lib/virtualbox/VBoxHeadless
 rm /usr/lib/virtualbox/VBoxHeadless
-\
-sudo apt purge virtualbox
- 2087  sudo apt autoremove 
 
- rm -r VagrantVMs_host01_server_1736595371076_2446
-
+#checking
 sudo ps axhf |grep virtualbox | grep -v grep
-sudo kill -9 $(ps axhf |grep virtualbox | grep -v grep |awk '{print $1}')
 
 
+
+# listing and removing VBox files created by Vagrant  *.vbox*
+
+# listing
+sudo find / -type f -name "*VagrantVMs*.vbox*" 2>/dev/null | while IFS= read -r file; do   sudo ls -las "$file"; done
+
+# deleting
+sudo find / -type f -name "*VagrantVMs*.vbox*" 2>/dev/null | while IFS= read -r file; do   sudo rm "$file"; done
+
+
+# searching for virtualbox and Vagrant shit/leftovers
+  
+  # VirtualBox
+  # listing
+  sudo find / -type f -name "*virtualbox*" 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo ls -las "$file"; done
+  # deleting
+  sudo find / -type f -name "*virtualbox*" 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo rm "$file"; done
+  
+  # Vagrant
+  #listing
+  sudo find / -type f -name "\.vagrant" 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo ls -las "$file"; done
+  #deleting
+  sudo find / -type f -name "\.vagrant" 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo rm "$file"; done
+  # deleting Vagrant files 
+  sudo find / -type f -name "*vagrant*" 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo rm  "$file"; done
+  # deleting vagrant directories
+  sudo find  / -type d -name \.vagrant\.d 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo ls -las "$file"; done
+sudo find  / -type d -name \.vagrant\.d 2>/dev/null |grep -v snap -v |grep -v Yaru| while IFS= read -r file; do  sudo rm -rd "$file"; done
+
+
+
+# checking if virtualization is enabled
+sudo lsmod |grep kvm 
+echo 'blacklist kvm-amd' >> /etc/modprobe.d/blacklist.conf
+
+
+# Installing virtualbox and vagrant
+sudo apt install virtualbox
+
+# https://developer.hashicorp.com/vagrant/docs/installation
+sudo apt install vagrant
