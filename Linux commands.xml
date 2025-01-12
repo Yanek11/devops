@@ -277,14 +277,24 @@ Executes the ls -las command with sudo for each file, providing detailed informa
 find / -type f -name "*VagrantVMs*" 2>/dev/null | while IFS= read -r file; do
   sudo ls -las "$file"
 done
-# SSH config
+
+
+
+##########################
+#       SSH config       #
+##########################
 Generate the ssh key on the master node:
 
 ssh-keygen -t rsa -C "main_router SSH key"
 Then copy your public key to the servers with ssh-copy-id:
 
-root@master:~# ssh-copy-id kk@deb01
+root@master:~#  ssh-copy-id kk@deb01
 root@master:~# ssh-copy-id kk@deb02
+
+# regenerate host keys for a new host. use when getting "the host key is used by the other addresses/names"
+ssh-keygen -f ~/.ssh/known_hosts -R deb01
+
+
 
 # Inventory #
 inventory.yaml
