@@ -295,45 +295,6 @@ root@master:~# ssh-copy-id kk@deb02
 ssh-keygen -f ~/.ssh/known_hosts -R deb01
 
 
-
-# Inventory #
-inventory.yaml
-
-myhosts:
- hosts:
-  deb01:
-   ansible_host: 1.1.1.1
-  deb02:
-   ansible_host: 2.2.2.1
-
-
-# Playbook #
-playbook.yaml
-
-- name: My first
-  hosts: myhosts
-  tasks:
-  - name: ping my hosts
-    ansible.builtin.ping:
-
-  - name: Print message
-    ansible.builtin.debug:
-     msg: Hello
-
-
-# example ping
-
-~/ansible/hosts.yaml 
-[web]
-1.1.1.1
-[dns]
-deb02.dupa.com
-
-
-ansible  -i  ~/ansible/hosts.yaml all -m  ansible.builtin.ping  
-
-
-
 ##############################
 VAGRANT / VirtualBox
 ##############################

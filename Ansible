@@ -238,9 +238,104 @@ https://rhtapps.redhat.com/promo/course/do007?segment=6
 1.
 1.23m
 
+###
+
+
+
+
+
+# Inventory #
+inventory.yaml
+
+myhosts:
+ hosts:
+  deb01:
+   ansible_host: 1.1.1.1
+  deb02:
+   ansible_host: 2.2.2.1
+
+
+# Playbook #
+playbook.yaml
+
+- name: My first
+  hosts: myhosts
+  tasks:
+  - name: ping my hosts
+    ansible.builtin.ping:
+
+  - name: Print message
+    ansible.builtin.debug:
+     msg: Hello
+
+
+# example ping
+
+~/ansible/hosts.yaml 
+[web]
+1.1.1.1
+[dns]
+deb02.dupa.com
+
+
+ansible  -i  ~/ansible/hosts.yaml all -m  ansible.builtin.ping  
+
+# limit hosts to which the playbook applies
+ansible-playbook -i ansible/hosts.yaml -c local ansible/mastery.yaml --limit deb12,deb11
+
+
+
 
 #endregion Ansible Basics #
 
 
 #endregion ### "TEORIA" ###
 
+
+#region OPERATIONS order PLAY
+
+# order in which "play"" is executed
+Variable loading
+Fact gathering
+The pre_tasks execution
+Handlers notified from the pre_tasks executionThe roles execution
+The tasks execution
+Handlers notified from the roles or tasks execution
+The post_tasks execution
+Handlers notified from the post_tasks execution
+
+
+# Example
+
+ ---
+ 2 - hosts: localhost
+ 3   gather_facts: false
+ 4   vars:
+ 5     a_var: derp
+ 6   pre_tasks:
+ 7     - name: pretask
+ 8       debug:
+ 9         msg: " a pre task "
+10       changed_when: true
+11       notify: say hi
+12   roles:
+13     - role: simple
+14       derp: newval
+15   tasks:
+16     - name: task
+17       debug:
+18         msg: "a task"
+19       changed_when: true
+20       notify: say hiexample
+21   post_tasks:
+22     - name: posttask
+23       debug:
+24         msg: " a post task"
+25       changed_when: true
+26       notify: say hi
+27   handlers:
+28     - name: say hi
+29       debug:
+30         msg: hi
+
+#endregion OPERATIONS
