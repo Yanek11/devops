@@ -306,6 +306,8 @@ Handlers notified from the post_tasks execution
 
 
 # Example
+# run ansbile-playbook operations.yaml 
+# file operations.yaml
 
  ---
  2 - hosts: localhost
@@ -338,4 +340,41 @@ Handlers notified from the post_tasks execution
 29       debug:
 30         msg: hi
 
+# result
+PLAY [localhost] *************************************************************************
+
+TASK [pretask] ***************************************************************************
+changed: [localhost] => {
+    "msg": " a pre task "
+}
+
+RUNNING HANDLER [say hi] *****************************************************************
+ok: [localhost] => {
+    "msg": "hi"
+}
+
+TASK [task] ******************************************************************************
+changed: [localhost] => {
+    "msg": "a task"
+}
+
+RUNNING HANDLER [say hi] *****************************************************************
+ok: [localhost] => {
+    "msg": "hi"
+}
+
+TASK [posttask] **************************************************************************
+changed: [localhost] => {
+    "msg": " a post task"
+}
+
+RUNNING HANDLER [say hi] *****************************************************************
+ok: [localhost] => {
+    "msg": "hi"
+}
+
+PLAY RECAP *******************************************************************************
+localhost                  : ok=6    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
 #endregion OPERATIONS
+
