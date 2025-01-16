@@ -372,3 +372,50 @@ sudo apt install virtualbox
 sudo apt install vagrant
 
 
+# region # PLAYBOOK #h bash script -  save history
+
+Bash
+
+#!/bin/bash
+
+# Save session history to a file
+history -a > ~/.ssh_history 
+
+# Clear the current session history (optional)
+history -c
+Explanation:
+
+#!/bin/bash: This line specifies that the script should be executed using the Bash interpreter.
+history -a: Appends the current session history to the file ~/.ssh_history.
+history -c: Clears the current session history. This is optional, but it can help prevent accidental reuse of commands from previous sessions.
+Save the script:
+
+Create a new file (e.g., save_ssh_history.sh).
+Paste the script code into the file.
+Make the script executable:
+Bash
+
+chmod +x save_ssh_history.sh
+Add to .bashrc or .bash_profile:
+
+Open your .bashrc or .bash_profile file in a text editor:
+
+Bash
+
+nano ~/.bashrc 
+Add the following line to the end of the file:
+
+Bash
+
+. ./save_ssh_history.sh 
+This line sources the save_ssh_history.sh script, effectively executing it at the end of each session.
+
+Save and close the file.
+
+#endregion bash script
+
+# attaching date and time to history command
+echo 'HISTTIMEFORMAT="%d/%m/%y %T "' >> ~/.bashrc  # or respectively
+echo 'HISTTIMEFORMAT="%F %T "' >> ~/.bashrc
+source ~/.bashrc
+ls
