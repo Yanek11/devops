@@ -417,3 +417,16 @@ names.yaml
 ansible-playbook  names.yaml -i ../relative_path/mastery-hosts 
 
 #endregion VARIABLES
+
+# simple commands - PING
+cat hosts.yaml 
+[frontend]
+deb11
+deb12
+[backend]
+deb21
+[backend:vars]
+ansible_port=314
+
+ansible  all -m ping  -i hosts.yaml
+
