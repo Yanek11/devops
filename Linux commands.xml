@@ -418,4 +418,30 @@ Save and close the file.
 echo 'HISTTIMEFORMAT="%d/%m/%y %T "' >> ~/.bashrc  # or respectively
 echo 'HISTTIMEFORMAT="%F %T "' >> ~/.bashrc
 source ~/.bashrc
-ls
+
+
+# grep - multiple condtions AND
+ls -Rlf /usr/share |grep -e yaml -B3 -e nanorc -B4
+
+# find files and print their location
+find /usr/share -type f -name "*yaml.*nano*" | awk '{print $0}' 
+
+count numer of directories
+# removing rxw- from the output
+exa ~ -RTFl 2>/dev/null |awk '{print $1}'|grep d |tr -d rwx- |wc -l
+
+# AWK - replacing every empty string with X
+echo abc |awk '{ gsub(// ,"X"); print}'
+echo abc |awk '{ gsub("" ,"X"); print}'
+
+# shows dirs only , inserting word "directory" at the beggining
+ls  -R  ~ |grep ^/ | awk '{ gsub(/^\//, "directory /"); print}'|wc -l
+
+# modified version. also filtering out dirs with string "t1" at 3rd level. example /home/kk/t1/
+ls  -R  ~ |grep ^/ |grep -v \/*\/*\/t1 | awk '{ gsub(/^\//, "directory /"); print}' |wc -l
+
+# selecting folders with "first" and "second" at the 3rd level
+ls  -R  ~ |grep ^/ |grep  -e \/*\/*\/second -e \/*\/*\/first| awk '{ gsub(/^\//, "directory /"); print}'
+
+# selecting only folders containing t1 at 3rd level 
+ls  -R  ~ |grep ^/ |grep  \/*\/*\/t1 | awk '{ gsub(/^\//, "directory /"); print}' 

@@ -378,3 +378,42 @@ localhost                  : ok=6    changed=3    unreachable=0    failed=0    s
 
 #endregion OPERATIONS
 
+
+#region VARIABLES
+
+
+
+names.yaml
+ 1 ---
+ 2 - name: play  with a {{var_name}}
+ 3   hosts: web01
+ 4   gather_facts: false
+ 5   vars:
+ 6    - var_name: not-mastery
+ 7   tasks:
+ 8   - name: set a variable
+ 9     ansible.builtin.set_fact:
+10      task_var_name: "defined variable"
+11   - name: task with a  {{task_var_name}}
+12     ansible.builtin.debug:
+13      msg: "I am a mastery task"
+14 - name: second play with a {{task_var_name}}
+15   hosts: web02
+16   gather_facts: false
+17   tasks:
+18   - name: task with a {{runtime_var_name}}
+19     ansible.builtin.debug:
+20      msg: " I am yet another mastery task"
+
+
+../relative_path/mastery-hosts 
+ [web01]
+ 2 deb11
+ 3 deb12
+ 4 [web02]
+ 5 deb21
+
+# command
+ansible-playbook  names.yaml -i ../relative_path/mastery-hosts 
+
+#endregion VARIABLES
