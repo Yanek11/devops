@@ -238,8 +238,16 @@ https://rhtapps.redhat.com/promo/course/do007?segment=6
 1.
 1.23m
 
+<<<<<<< HEAD
+2. handler
+ 9.18m
+=======
 ###
+>>>>>>> 96fa9e9e60dd3779951b10926b5b7bffb1eac21b
 
+<<<<<<< HEAD
+
+=======
 
 
 
@@ -286,6 +294,7 @@ ansible-playbook -i ansible/hosts.yaml -c local ansible/mastery.yaml --limit deb
 
 
 
+>>>>>>> 96fa9e9e60dd3779951b10926b5b7bffb1eac21b
 #endregion Ansible Basics #
 
 
