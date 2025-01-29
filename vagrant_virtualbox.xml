@@ -156,6 +156,21 @@ admin-konrado:
 ############### vagrant and virtual box - scenarions / configurations ############### 
 
 
+#### KVM + VNC ####
+    
+    - Hetzner host: install X and vnc  server: 
+        sudo apt update 
+        sudo apt install xorg xfce4 xfce4-goodies 
+        sudo apt install tightvncserver 
+
+    
+    - Hetzner host: create a stron password for VNC: vncpassword
+    - Hetzner: SSH forwarding
+        ssh -L 5901:localhost:5900 ssh admin-konrado@88.99.213.85
+        - checking ports open: sudo lsof -i :5903
+#### KVM + VNC #### END
+
+
 
 
 vagrant destroy -f;VAGRANT_LOG=debug vagrant up > vagrant_log.txt 2>&1
