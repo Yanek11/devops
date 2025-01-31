@@ -1,0 +1,65 @@
+
+https://pve.proxmox.com/pve-docs/chapter-sysadmin.html#_default_configuration_using_a_bridge
+
+# web access and SSH - start
+  - iptables rules
+        sudo iptables -F
+        sudo iptables -t nat -F
+
+        # Allow loopback traffic (essential for many services)
+        sudo iptables -A INPUT -i lo -j ACCEPT
+        sudo iptables -A OUTPUT -o lo -j ACCEPT
+
+        # Allow established and related connections (Crucial!)
+        sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+        sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+        # Port forwarding 666 (external) to 8006 (internal)
+        sudo iptables -t nat -A PREROUTING -p tcp --dport 666 -j DNAT --to-destination 127.0.0.1:8006
+        sudo iptables -A INPUT -p tcp --dport 8006 -j ACCEPT  # Allow traffic on the internal port
+
+        # Port forwarding 6666 (external) to 6666 (internal) - Only DNAT is needed
+        sudo iptables -t nat -A PREROUTING -p tcp --dport 6666 -j DNAT --to-destination 127.0.0.1:6666
+
+
+        # Default DROP policy for INPUT and FORWARD chains
+        sudo iptables -P INPUT DROP
+        sudo iptables -P FORWARD DROP
+        sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
+  - iptables rules
+  
+        optional: sudo apt update
+        sudo apt install iptables-persistent
+    sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
+
+# web access and SSH - end
+
+# additional IP
+    
+# additional IP
+
+# creating private LAN - start
+    - create a bridge interface
+        /etc/network/interfaces
+            auto vmbr0
+            iface vmbr0 inet static
+            address  1.1.1.254
+        bridge-ports none
+        bridge-stp off
+        bridge-fd 0   
+# creating private LAN - end
+
+attempts=0
+max_attempts=10
+until ssh admin-konrado@88.99.213.85; do
+  attempts=$((attempts + 1))
+  echo "Attempt $attempts of $max_attempts: SSH connection to kk@1.1.1.1 failed. Retrying in 5 seconds..."
+  if [[ $attempts -ge $max_attempts ]]; then
+    echo "Connection attempts exceeded. Exiting."
+    exit 1
+  fi
+  sleep 5
+done
+
+echo "SSH connection successful!"
+
