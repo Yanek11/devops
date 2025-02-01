@@ -1,0 +1,32 @@
+sudo iptables -F
+sudo iptables -t nat -F
+
+# Allow loopback traffic (essential)
+sudo iptables -A INPUT -i lo -j ACCEPT
+sudo iptables -A OUTPUT -o lo -j ACCEPT
+
+# Allow established and related connections (Crucial!)
+sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# Port forwarding 666 (external) to 8006 (internal)
+sudo iptables -t nat -A PREROUTING -p tcp --dport 666 -j DNAT --to-destination 127.0.0.1:8006
+# Important: Allow traffic on the *external* port after DNAT
+sudo iptables -A INPUT -p tcp --dport 666 -j ACCEPT
+
+# Port forwarding 6666 (external) to 6666 (internal)
+sudo iptables -t nat -A PREROUTING -p tcp --dport 6666 -j DNAT --to-destination 127.0.0.1:6666
+# Important: Allow traffic on the *external* port after DNAT
+sudo iptables -A INPUT -p tcp --dport 6666 -j ACCEPT
+
+# Allow SSH (Important - add if you need remote access)
+#  Restrict source IP if possible for better security
+# sudo iptables -A INPUT -p tcp --dport 22 -s <your_ip_address> -j ACCEPT  # Replace with your IP
+#sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT # Only if you don't want to restrict SSH access
+
+# Default DROP policy for INPUT and FORWARD chains
+sudo iptables -P INPUT DROP
+sudo iptables -P FORWARD DROP
+
+# Default ACCEPT policy for OUTPUT chain (You might want to restrict this later)
+sudo iptables -P OUTPUT ACCEPT # generally recommended to start with DROP and allow specific outbound connections

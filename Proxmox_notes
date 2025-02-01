@@ -49,17 +49,4 @@ https://pve.proxmox.com/pve-docs/chapter-sysadmin.html#_default_configuration_us
         bridge-fd 0   
 # creating private LAN - end
 
-attempts=0
-max_attempts=10
-until ssh admin-konrado@88.99.213.85; do
-  attempts=$((attempts + 1))
-  echo "Attempt $attempts of $max_attempts: SSH connection to kk@1.1.1.1 failed. Retrying in 5 seconds..."
-  if [[ $attempts -ge $max_attempts ]]; then
-    echo "Connection attempts exceeded. Exiting."
-    exit 1
-  fi
-  sleep 5
-done
-
-echo "SSH connection successful!"
 
