@@ -14,14 +14,20 @@ https://pve.proxmox.com/pve-docs/chapter-sysadmin.html#_default_configuration_us
         sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
         sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
-        # Proxmox - Port forwarding 6666 (external) to 8006 (internal)
-        sudo iptables -t nat -A PREROUTING -p tcp --dport 6666 -j DNAT --to-destination 127.0.0.1:8006
-        sudo iptables -A INPUT -p tcp --dport 8006 -j ACCEPT  # Allow traffic on the internal port
 
-        # SSH - Port forwarding 666 (external) to 666 (internal) - Only DNAT is needed
+ # SSH - Port forwarding 666 (external) to 666 (internal) - 
         sudo iptables -t nat -A PREROUTING -p tcp --dport 666 -j DNAT --to-destination 127.0.0.1:666
+     sudo iptables -A INPUT -p tcp --dport 666 -j ACCEPT  # Allow traffic on the internal port
+
       # SSH - Port forwarding 22 (external) to 22 (internal) - Only DNAT is needed
         sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j DNAT --to-destination 127.0.0.1:22
+
+
+        # Proxmox - Port forwarding 6666 (external) to 8006 (internal) Only DNAT is needed
+        sudo iptables -t nat -A PREROUTING -p tcp --dport 6666 -j DNAT --to-destination 127.0.0.1:8006
+    
+
+       
         
 
 # Default DROP policy for INPUT and FORWARD chains
