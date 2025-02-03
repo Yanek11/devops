@@ -1,32 +1,42 @@
-sudo iptables -F
-sudo iptables -t nat -F
 
-# Allow loopback traffic (essential)
-sudo iptables -A INPUT -i lo -j ACCEPT
-sudo iptables -A OUTPUT -o lo -j ACCEPT
+sudo iptables-nft -F
+sudo iptables-nft -t nat -F
 
-# Allow established and related connections (Crucial!)
-sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+# 1. Allow established/related FIRST (so you don't lose your current connection)
+sudo iptables-nft -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables-nft -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
-# Port forwarding 666 (external) to 8006 (internal)
-sudo iptables -t nat -A PREROUTING -p tcp --dport 666 -j DNAT --to-destination 127.0.0.1:8006
-# Important: Allow traffic on the *external* port after DNAT
-sudo iptables -A INPUT -p tcp --dport 666 -j ACCEPT
+# 2. Loopback
+sudo iptables-nft -A INPUT -i lo -j ACCEPT
+sudo iptables-nft -A OUTPUT -o lo -j ACCEPT
 
-# Port forwarding 6666 (external) to 6666 (internal)
-sudo iptables -t nat -A PREROUTING -p tcp --dport 6666 -j DNAT --to-destination 127.0.0.1:6666
-# Important: Allow traffic on the *external* port after DNAT
-sudo iptables -A INPUT -p tcp --dport 6666 -j ACCEPT
+# 3. SSH - Corrected! Replace 192.168.1.100 with your server's INTERNAL IP
+sudo iptables-nft -t nat -A PREROUTING -p tcp --dport 666 -j DNAT --to-destination 88.99.213.85:666
+#sudo iptables-nft -t nat -A PREROUTING -p tcp --dport 22 -j DNAT --to-destination 88.99.213.85:22
+sudo iptables-nft -A INPUT -p tcp --dport 666 -j ACCEPT  # Allow the traffic after DNAT
+#sudo iptables-nft -A INPUT -p tcp --dport 22 -j ACCEPT  # Allow the traffic after DNAT
 
-# Allow SSH (Important - add if you need remote access)
-#  Restrict source IP if possible for better security
-# sudo iptables -A INPUT -p tcp --dport 22 -s <your_ip_address> -j ACCEPT  # Replace with your IP
-#sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT # Only if you don't want to restrict SSH access
 
-# Default DROP policy for INPUT and FORWARD chains
-sudo iptables -P INPUT DROP
-sudo iptables -P FORWARD DROP
+# 4. Proxmox - Corrected!  Replace eth0 if needed, and 192.168.1.100 with your server's INTERNAL IP
+#sudo iptables-nft -t nat -A PREROUTING -p tcp --dport 6666 -j DNAT --to-destination 88.99.213.85:8006
+#sudo iptables-nft -A INPUT -i eth0 -p tcp --dport 6666 -j ACCEPT  # Allow the traffic after DNAT
 
-# Default ACCEPT policy for OUTPUT chain (You might want to restrict this later)
-sudo iptables -P OUTPUT ACCEPT # generally recommended to start with DROP and allow specific outbound connections
+# 5. HTTP/HTTPS
+#sudo iptables-nft -A INPUT -p tcp --dport 80 -j ACCEPT
+#sudo iptables-nft -A INPUT -p tcp --dport 443 -j ACCEPT
+
+
+# 6. NOW set the default policies (after all other rules are in place)
+sudo iptables-nft -P INPUT DROP
+sudo iptables-nft -P FORWARD DROP  # Only if you're using forwarding
+
+# 7. Outgoing (usually already allowed, but good to have explicitly)
+sudo iptables-nft -A OUTPUT -j ACCEPT
+
+# 8. Save your rules (important!)
+sudo apt-get install iptables-persistent
+sudo mkdir -p /etc/iptables
+sudo touch  /etc/iptables/rules.v4
+
+sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
+sudo netfilter-persistent save
