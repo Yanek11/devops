@@ -39,8 +39,33 @@ sudo iptables-nft -P FORWARD DROP  # Only if you're using forwarding
 sudo iptables-nft -A OUTPUT -j ACCEPT
 
 # 8. Save your rules (important!)
-# The way to save depends on your system (e.g., iptables-save > /etc/iptables/rules.v4)
+sudo apt-get install iptables-persistent
+sudo mkdir -p /etc/iptables
+sudo touch  /etc/iptables/rules.v4
 
+sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
+sudo netfilter-persistent save
+
+
+
+
+# Create a systemd service file (e.g., /etc/systemd/system/iptables.service):
+sudo nano /etc/systemd/system/iptables.service
+        [Unit]
+        Description=iptables firewall rules
+        After=network.target
+        
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/sbin/iptables-restore < /etc/iptables/rules.v4
+        ExecStop=/sbin/iptables-save > /etc/iptables/rules.v4
+        
+        [Install]
+        WantedBy=multi-user.target
+# enable and start service
+sudo systemctl enable iptables.service
+sudo systemctl start iptables.service
 
 
 # Save the rules (crucial!)
