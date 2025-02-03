@@ -1,0 +1,67 @@
+Hetzner SMB backup to Storage Box
+
+//u445871.your-storagebox.de/backup
+
+
+#!/bin/bash
+
+# Configuration
+SOURCE="/path/to/source/directory"
+REMOTE_HOST="<username>.your-storagebox.de"
+REMOTE_SHARE_NAME="backup"
+MOUNT_POINT="/PATH/FOLDER"
+BACKUP_DIR="$MOUNT_POINT/$(date +%Y-%m-%d)"
+LATEST_LINK="$MOUNT_POINT/latest"
+
+# 0. Source credentials (replace with your chosen method)
+# Option 1: Credentials file (recommended)
+ source .smbcredentials  # Uncomment and create .smbcredentials file
+
+# Option 2: Environment variables (less recommended, but possible)
+# SMB_USERNAME="$SMB_USERNAME" # Make sure these are set before running the script
+# SMB_PASSWORD="$SMB_PASSWORD"
+
+# 1. Check if the mount point exists
+if [ ! -d "$MOUNT_POINT" ]; then
+    mkdir -p "$MOUNT_POINT"
+fi
+
+# 2. Mount the Samba share (using sourced credentials)
+
+# Choose ONE of the following mount commands, depending on your chosen method:
+
+# Option 1: Credentials file
+sudo mount.cifs -o user="$username",pass="$password" "//$REMOTE_HOST/$REMOTE_SHARE_NAME" "$MOUNT_POINT"
+
+# Option 2: Environment variables
+# sudo mount.cifs -o user="$SMB_USERNAME",pass="$SMB_PASSWORD" "//$REMOTE_HOST/$REMOTE_SHARE_NAME" "$MOUNT_POINT"
+
+
+
+# Check if the mount was successful
+if [[ ! -d "$MOUNT_POINT" ]]; then
+    echo "Error: Failed to mount Samba share. Check credentials and network connectivity."
+    exit 1
+fi
+
+# 3. Create the backup directory
+mkdir -p "$BACKUP_DIR"
+
+# 4. Perform the backup (incremental with check, or full)
+if [[ -d "$MOUNT_POINT/$(date -d "yesterday" +%Y-%m-%d)" ]]; then
+  rsync -avz --delete --link-dest="$MOUNT_POINT/$(date -d "yesterday" +%Y-%m-%d)" "$SOURCE/" "$BACKUP_DIR/"
+else
+  rsync -avz --delete "$SOURCE/" "$BACKUP_DIR/" # Full backup if no previous day is available
+fi
+
+# or (for full backup every time):
+# cp -r "$SOURCE" "$BACKUP_DIR"  # Uncomment if you prefer full backups only
+
+# 5. Update the latest link
+rm -f "$LATEST_LINK"
+ln -s "$BACKUP_DIR" "$LATEST_LINK"
+
+# 6. Unmount the share
+sudo umount "$MOUNT_POINT"
+
+echo "Backup completed."
