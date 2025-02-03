@@ -7,34 +7,41 @@ https://pve.proxmox.com/pve-docs/chapter-sysadmin.html#_default_configuration_us
 sudo iptables-nft -F
 sudo iptables-nft -t nat -F
 
-# Allow loopback traffic
-sudo iptables-nft -A INPUT -i lo -j ACCEPT
-sudo iptables-nft -A OUTPUT -o lo -j ACCEPT
-
-# Allow established and related connections
+# 1. Allow established/related FIRST (so you don't lose your current connection)
 sudo iptables-nft -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo iptables-nft -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
-# SSH - Port forwarding 666 (external) to 666 (internal)
-sudo iptables-nft -t nat -A PREROUTING -p tcp --dport 666 -j DNAT --to-destination 127.0.0.1:666
-sudo iptables-nft -A INPUT -p tcp --dport 666 -j ACCEPT
+# 2. Loopback
+sudo iptables-nft -A INPUT -i lo -j ACCEPT
+sudo iptables-nft -A OUTPUT -o lo -j ACCEPT
 
-# SSH - Port forwarding 22 (external) to 22 (internal)
-sudo iptables-nft -t nat -A PREROUTING -p tcp --dport 22 -j DNAT --to-destination 127.0.0.1:22
+# 3. SSH - Corrected! Replace 192.168.1.100 with your server's INTERNAL IP
+sudo iptables-nft -t nat -A PREROUTING -p tcp --dport 666 -j DNAT --to-destination 88.99.213.85:666
+#sudo iptables-nft -t nat -A PREROUTING -p tcp --dport 22 -j DNAT --to-destination 88.99.213.85:22
+sudo iptables-nft -A INPUT -p tcp --dport 666 -j ACCEPT  # Allow the traffic after DNAT
+#sudo iptables-nft -A INPUT -p tcp --dport 22 -j ACCEPT  # Allow the traffic after DNAT
 
-# Proxmox - Port forwarding 6666 (external) to 8006 (internal)
-sudo iptables-nft -t nat -A PREROUTING -p tcp --dport 6666 -j DNAT --to-destination 127.0.0.1:8006
 
-# Allow HTTP and HTTPS
-sudo iptables-nft -A INPUT -p tcp --dport 80 -j ACCEPT
-sudo iptables-nft -A INPUT -p tcp --dport 443 -j ACCEPT
+# 4. Proxmox - Corrected!  Replace eth0 if needed, and 192.168.1.100 with your server's INTERNAL IP
+#sudo iptables-nft -t nat -A PREROUTING -p tcp --dport 6666 -j DNAT --to-destination 88.99.213.85:8006
+#sudo iptables-nft -A INPUT -i eth0 -p tcp --dport 6666 -j ACCEPT  # Allow the traffic after DNAT
 
-# Default DROP policy for INPUT and FORWARD chains
+# 5. HTTP/HTTPS
+#sudo iptables-nft -A INPUT -p tcp --dport 80 -j ACCEPT
+#sudo iptables-nft -A INPUT -p tcp --dport 443 -j ACCEPT
+
+
+# 6. NOW set the default policies (after all other rules are in place)
 sudo iptables-nft -P INPUT DROP
-sudo iptables-nft -P FORWARD DROP
+sudo iptables-nft -P FORWARD DROP  # Only if you're using forwarding
 
-# Allow outgoing connections
+# 7. Outgoing (usually already allowed, but good to have explicitly)
 sudo iptables-nft -A OUTPUT -j ACCEPT
+
+# 8. Save your rules (important!)
+# The way to save depends on your system (e.g., iptables-save > /etc/iptables/rules.v4)
+
+
 
 # Save the rules (crucial!)
 sudo iptables-nft-save > /etc/iptables/rules.v4
