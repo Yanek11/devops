@@ -1,3 +1,15 @@
+### Hetzner host IPs ###
+
+VM traffic
+	88.99.213.79	00:50:56:00:A1:75	static.79.213.99.88.clients.your-server.de
+
+WEB Management
+	88.99.213.85		static.85.213.99.88.clients.your-server.de	 
+
+gateway
+88.99.213.65
+
+
 # web access and SSH - start
 
 sudo iptables -F
