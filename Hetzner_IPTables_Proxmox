@@ -1,70 +1,83 @@
 ### Hetzner host IPs ###
 
-VM traffic
-	88.99.213.79	00:50:56:00:A1:75	static.79.213.99.88.clients.your-server.de
+    VM traffic
+        88.99.213.79	00:50:56:00:A1:75	static.79.213.99.88.clients.your-server.de
 
-WEB Management
-	88.99.213.85		static.85.213.99.88.clients.your-server.de	 
+    WEB Management
+        88.99.213.85		static.85.213.99.88.clients.your-server.de	 
 
-gateway
-88.99.213.65
-
-
-# web access and SSH - start
-
-sudo iptables -F
-sudo iptables -t nat -F
-
-# 1. Allow established/related FIRST
-sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-
-# 2. Loopback
-sudo iptables -A INPUT -i lo -j ACCEPT
-sudo iptables -A OUTPUT -o lo -j ACCEPT
-
-# 3. SSH and PROXMOX mappings
-
-IP_EXTERNAL="88.99.213.85"
-LOOPBACK="127.0.0.1"
-
-SSH_PORT_EXTERNAL="666"      
-SSH_PORT_INTERNAL="666"        
-
-PROXMOX_PORT_EXTERNAL="777"
-PROXMOX_PORT_INTERNAL="8006"
+    gateway
+    88.99.213.65
 
 
-# Allowed SSH IP addresses (add more as needed)
-ALLOWED_SSH_IPS=("138.199.59.0/24" "45.134.212.0/24" "85.221.131.0/24")
+# Proxmox - IPTables -SSH/WebGUI access #
 
-# Allowed Proxmox IP addresses (add more as needed)
-ALLOWED_PROXMOX_IPS=("138.199.59.0/24" "45.134.212.0/24" "85.221.131.0/24")
+    #!/bin/bash
 
+    # Define IP addresses and ports
+    IP_EXTERNAL_MANAGE="88.99.213.85"  # Management IP (Proxmox host)
+    IP_EXTERNAL_VMS="88.99.213.79"      # VMs IP
 
-# SSH Rules (with source IP restriction)
-for ip in "${ALLOWED_SSH_IPS[@]}"; do
-  sudo iptables -t nat -A PREROUTING -p tcp --dport $SSH_PORT_EXTERNAL -s "$ip" -j DNAT --to-destination $IP_EXTERNAL:$SSH_PORT_INTERNAL
-  sudo iptables -A INPUT -p tcp --dport $SSH_PORT_INTERNAL -s "$ip" -j ACCEPT
-done
+    LOOPBACK="127.0.0.1"
 
-# Proxmox Rules (with source IP restriction)
-for ip in "${ALLOWED_PROXMOX_IPS[@]}"; do
-  sudo iptables -t nat -A PREROUTING -p tcp --dport $PROXMOX_PORT_EXTERNAL -s "$ip" -j DNAT --to-destination $IP_EXTERNAL:$PROXMOX_PORT_INTERNAL
-  sudo iptables -A INPUT -p tcp --dport $PROXMOX_PORT_INTERNAL -s "$ip" -j ACCEPT
-done
-
-# 6. Default policies (AFTER all other rules)
-sudo iptables -P INPUT DROP
-#sudo iptables -P FORWARD DROP  # Only if you're using forwardings
-sudo iptables -P OUTPUT ACCEPT  # Outgoing is generally allowed
+    SSH_PORT_EXTERNAL_MANAGE="666"   # SSH to Proxmox host
+    SSH_PORT_EXTERNAL_VMS="11111"     # SSH to VMs
+    SSH_PORT_INTERNAL="11111"          # SSH port on Proxmox host
+    SSH_PORT_VM_INTERNAL="11111"       # SSH port on the VM
 
 
+    PROXMOX_PORT_EXTERNAL="777"
+    PROXMOX_PORT_INTERNAL="8006"
 
-# Save the rules (important!)
-    sudo apt-get install iptables-persistent
-    sudo mkdir -p /etc/iptables
-    sudo touch  /etc/iptables/rules.v4
+    # Allowed IP addresses and subnets (same for all in this example)
+    ALLOWED_IPS=("138.199.59.0/24" "45.134.212.0/24" "85.221.131.0/24")
+
+
+    # Clear existing iptables rules (use with caution!)
+    sudo iptables -F
+    sudo iptables -t nat -F  # Important: Clear the nat table as well
+
+    # 1. Allow established/related connections
+    sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+    sudo iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+    # 2. Loopback interface
+    sudo iptables -A INPUT -i lo -j ACCEPT
+    sudo iptables -A OUTPUT -o lo -j ACCEPT
+
+    # 3. SSH Rules - Management traffic (Proxmox host - Port 666 to 11111)
+    for ip in "${ALLOWED_IPS[@]}"; do
+    sudo iptables -t nat -A PREROUTING -p tcp --dport $SSH_PORT_EXTERNAL_MANAGE -s "$ip" -j DNAT --to-destination $IP_EXTERNAL_MANAGE:$SSH_PORT_INTERNAL
+    sudo iptables -A INPUT -p tcp -m tcp --dport $SSH_PORT_INTERNAL -s "$ip" -j ACCEPT  # Allow traffic on port 11111 (internal)
+    done
+
+    # 4. SSH Rules - VMs traffic (Port 11111 directly)
+    for ip in "${ALLOWED_IPS[@]}"; do
+    sudo iptables -A INPUT -p tcp -m tcp --dport $SSH_PORT_EXTERNAL_VMS -s "$ip" -j ACCEPT  # Allow traffic directly on port 11111
+    done
+
+    # 5. Proxmox Rules (management traffic)
+    for ip in "${ALLOWED_IPS[@]}"; do
+    sudo iptables -t nat -A PREROUTING -p tcp --dport $PROXMOX_PORT_EXTERNAL -s "$ip" -j DNAT --to-destination $IP_EXTERNAL_MANAGE:$PROXMOX_PORT_INTERNAL
+    sudo iptables -A INPUT -p tcp -m tcp --dport $PROXMOX_PORT_INTERNAL -s "$ip" -j ACCEPT
+    done
+
+    # 6. SNAT (Masquerade) - Important if behind a NAT gateway
+    sudo iptables -t nat -A POSTROUTING -j MASQUERADE  # Uncomment if needed
+
+    # 7. Default policies (AFTER all other rules) - CRUCIAL for security
+    sudo iptables -P INPUT DROP
+    # sudo iptables -P FORWARD DROP  # Uncomment if you're using forwarding
+    sudo iptables -P OUTPUT ACCEPT
+
+    # 8. Save the rules (essential!)
+    sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
+    #sudo iptables-save > /etc/iptables/rules.v6 # If you are using IPv6
+
+    echo "iptables rules applied."
+
+# Proxmox - IPTables -SSH/WebGUI access # END
+
     
 
 
