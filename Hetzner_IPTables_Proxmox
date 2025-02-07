@@ -105,7 +105,7 @@ sudo netfilter-persistent save
 
 
 
-# Create a systemd service file (e.g., /etc/systemd/system/iptables.service):
+# OPTIONAL Create a systemd service file (e.g., /etc/systemd/system/iptables.service):
 sudo nano /etc/systemd/system/iptables.service
         [Unit]
         Description=iptables firewall rules
@@ -119,22 +119,17 @@ sudo nano /etc/systemd/system/iptables.service
         
         [Install]
         WantedBy=multi-user.target
-# enable and start service
-sudo systemctl enable iptables.service
-sudo systemctl start iptables.service
-
-
-# Save the rules (crucial!)
-sudo iptables -save > /etc/iptables/rules.v4
-
-# Make rules persistent (Debian/Ubuntu example)
-sudo apt-get install iptables-persistent  # If not already installed
-sudo iptables-persistent save
-
 
 
 
 # web access and SSH - end
 
-
+# VMs IP config
+    /etc/network/interfaces
+    auto ens19
+    iface ens19 inet static
+    address 1.1.1.254
+    netmask	255.255.255.0
+    dns-nameserver 127.0.0.1
+# VMs IP config
 
