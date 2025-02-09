@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Definicje zmiennych dla Routera
+export EXTERNAL_IP_ROUTER="88.99.213.79"
+export INTERNAL_SUBNET_01="1.1.1.0/24"
+export INTERNAL_IP_ROUTER="1.1.1.254"
+export SSH_INTERNAL_PORT_ROUTER="22"
+export SSH_EXTERNAL_PORT_ROUTER="11777"
+export SSH_EXTERNAL_PORT_PROXMOX="11666"
+export SSH_INTERNAL_PORT_PROXMOX="22"
+export EXTERNAL_INTERFACE_ROUTER="ens18"
+export INTERNAL_INTERFACE_ROUTER="ens19"
+export ALLOWED_IPS_ROUTER=("138.199.59.0/24" "45.134.212.0/24" "85.221.131.0/24") # <--- Zastąp swoimi dozwolonymi IP dla SSH Router
+
+#

@@ -17,21 +17,20 @@
     # Define IP addresses and ports
     IP_EXTERNAL_MANAGE="88.99.213.85"  # Management IP (Proxmox host)
     IP_EXTERNAL_VMS="88.99.213.79"      # VMs IP
-
     LOOPBACK="127.0.0.1"
 
     SSH_PORT_EXTERNAL_MANAGE="666"   # SSH to Proxmox host
     SSH_PORT_EXTERNAL_VMS="11111"     # SSH to VMs
     SSH_PORT_INTERNAL="11111"          # SSH port on Proxmox host
     SSH_PORT_VM_INTERNAL="11111"       # SSH port on the VM
-
-
-    PROXMOX_PORT_EXTERNAL="777"
+    LAN01_INTERFACE="vmbr1"
+    WAN01_INTERFACE="vmbr0"
     PROXMOX_PORT_INTERNAL="8006"
 
     # Allowed IP addresses and subnets (same for all in this example)
     ALLOWED_IPS=("138.199.59.0/24" "45.134.212.0/24" "85.221.131.0/24")
-
+    # LAN Subnets (for ICMP forwarding)
+    LAN01_SUBNET="1.1.1.0/24"  # Replace with your actual LAN subnet
 
     # Clear existing iptables rules (use with caution!)
     sudo iptables -F
@@ -61,16 +60,18 @@
     sudo iptables -t nat -A PREROUTING -p tcp --dport $PROXMOX_PORT_EXTERNAL -s "$ip" -j DNAT --to-destination $IP_EXTERNAL_MANAGE:$PROXMOX_PORT_INTERNAL
     sudo iptables -A INPUT -p tcp -m tcp --dport $PROXMOX_PORT_INTERNAL -s "$ip" -j ACCEPT
     done
+    # 6. ICMP Forwarding from LAN
+    sudo iptables -A FORWARD -i $LAN01_INTERFACE -o $WAN_INTERFACE -s "$LAN01_SUBNET" -p icmp -j ACCEPT  # Replace with your LAN and WAN interfaces
 
-    # 6. SNAT (Masquerade) - Important if behind a NAT gateway
+    # 7. SNAT (Masquerade) - Important if behind a NAT gateway
     sudo iptables -t nat -A POSTROUTING -j MASQUERADE  # Uncomment if needed
 
-    # 7. Default policies (AFTER all other rules) - CRUCIAL for security
+    # 8. Default policies (AFTER all other rules) - CRUCIAL for security
     sudo iptables -P INPUT DROP
     # sudo iptables -P FORWARD DROP  # Uncomment if you're using forwarding
     sudo iptables -P OUTPUT ACCEPT
 
-    # 8. Save the rules (essential!)
+    # 9. Save the rules (essential!)
     sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
     #sudo iptables-save > /etc/iptables/rules.v6 # If you are using IPv6
 
@@ -98,6 +99,14 @@
     sudo iptables -I INPUT -p tcp --dport 666 -j ssh_log
 
 # OPTIONAL # LOGGING SSH connections  END
+
+# logging ICMP
+
+
+journalctl -k | grep "IPTABLES FORWARD ICMP LAN->8.8.8.8: "  # Kernel logs
+journalctl | grep "IPTABLES FORWARD ICMP LAN->8.8.8.8: "     # System logs
+
+
 
 sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
 sudo netfilter-persistent save
