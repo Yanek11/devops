@@ -1,7 +1,0 @@
----
-- hosts: all
-  tasks:
-    - name: Gather facts about the host
-      setup: 
-        filter: 
-          - ansible_default_ipv4.address 
