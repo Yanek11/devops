@@ -4,7 +4,7 @@
 export EXTERNAL_IP_PROXMOX="88.99.213.85"
 export EXTERNAL_INTERFACE_PROXMOX="vmbr0"
 export SSH_INTERNAL_PORT_PROXMOX="22"
-export SSH_EXTERNAL_PORT_PROXMOX="666"  # The external port for SSH
+export SSH_EXTERNAL_PORT_PROXMOX="22"  # The external port for SSH
 export WEB_INTERNAL_PORT_PROXMOX="8006"
 export WEB_EXTERNAL_PORT_PROXMOX="8006"  # The external port for Proxmox Web
 

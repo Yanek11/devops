@@ -1,4 +1,0 @@
-# adding clients public key to SSH server
-type $env:USERPROFILE\.ssh\id_rsa.pub | ssh px.kk1kk.store -p 666 "cat >> .ssh/authorized_keys"
-
-
