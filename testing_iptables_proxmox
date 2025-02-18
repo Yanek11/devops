@@ -1,4 +1,4 @@
-# WORKING OK with port 22/8006. no DNAT
+  GNU nano 7.2                                                                                                                                                                   ./firewall *                                                                                                                                                                           
 #!/bin/bash
 
 # Variable definitions for Proxmox
@@ -18,7 +18,7 @@ sudo iptables -t nat -F
 sudo iptables -t nat -X
 
 # Set default policies (crucial for security)
-sudo iptables -P INPUT DROP
+sudo iptables -P INPUT ACCEPT
 sudo iptables -P FORWARD DROP  # Not strictly necessary in this scenario, but good practice
 sudo iptables -P OUTPUT ACCEPT
 
@@ -28,28 +28,23 @@ sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 # 1a. Allow incoming SSH to Proxmox (from ALLOWED_IPS_PROXMOX) on the EXTERNAL port
 for ip in "${ALLOWED_IPS_PROXMOX[@]}"; do
   sudo iptables -A INPUT -i $EXTERNAL_INTERFACE_PROXMOX -p tcp --dport $SSH_EXTERNAL_PORT_PROXMOX -s "$ip" -j ACCEPT
+  sudo iptables -A INPUT -i $EXTERNAL_INTERFACE_PROXMOX -s "$ip" -j ACCEPT
 done
 
-# 1b. Allow incoming web management (8006) to Proxmox (from ALLOWED_IPS_PROXMOX) on the EXTERNAL port
+# 1b. Allow all traffic to port 8006 from ALLOWED_IPS_PROXMOX
 for ip in "${ALLOWED_IPS_PROXMOX[@]}"; do
   sudo iptables -A INPUT -i $EXTERNAL_INTERFACE_PROXMOX -p tcp --dport $WEB_EXTERNAL_PORT_PROXMOX -s "$ip" -j ACCEPT
+  sudo iptables -A INPUT -i $EXTERNAL_INTERFACE_PROXMOX -s "$ip" -j ACCEPT
 done
-
-# 2a. Port Forwarding (NAT) - SSH 666=>22
-sudo iptables -t nat -A PREROUTING -i $EXTERNAL_INTERFACE_PROXMOX -p tcp --dport $SSH_EXTERNAL_PORT_PROXMOX -j DNAT --to-destination :$SSH_INTERNAL_PORT_PROXMOX
-
-# 2b. Port Forwarding (NAT) - PROXMOX WEB 8006=>8006
-sudo iptables -t nat -A PREROUTING -i $EXTERNAL_INTERFACE_PROXMOX -p tcp --dport $WEB_EXTERNAL_PORT_PROXMOX -j DNAT --to-destination :$WEB_INTERNAL_PORT_PROXMOX
-
 
 # 4. Log and block the rest of the traffic (for security)
 sudo iptables -A INPUT -j LOG --log-prefix "IPTABLES_PROXMOX_DROP_INPUT: "
-sudo iptables -A INPUT -j DROP
+# Comment out or remove the DROP rule
+# sudo iptables -A INPUT -j DROP
 sudo iptables -A FORWARD -j LOG --log-prefix "IPTABLES_PROXMOX_DROP_FORWARD: " # Although FORWARD is DROP by default
 sudo iptables -A FORWARD -j DROP
 
-
-
 # Save the rules (important!)
-#sudo iptables-save > /etc/iptables/rules.v4
-#sudo netfilter-persistent save  # If you're using netfilter-persistent
+sudo iptables-save > /etc/iptables/rules.v4
+sudo netfilter-persistent save  # If you're using netfilter-persistent
+
