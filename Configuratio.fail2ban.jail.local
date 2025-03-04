@@ -1,0 +1,6 @@
+kk@router01:~$ cat  /etc/fail2ban/jail.local |grep -v ^# |grep -v '^$' |grep -F [sshd] -A10
+[sshd]
+enabled = true
+port    = 7979
+logpath = %(syslog_authpriv)s
+backend = systemd

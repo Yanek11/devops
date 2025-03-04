@@ -3,6 +3,36 @@ link to Ansible books
 https://mega.nz/folder/McoVmDTD#-gax2JDNcsc1eMV53GXzvg
 
 
+# scenario 01 - pinging hosts
+
+playbook.yml
+---
+- name: Ping multiple hosts
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Ping hosts
+      ansible.builtin.ping:
+
+inventory.yml
+all:
+  hosts:
+    deb01:
+      ansible_host: 1.1.1.3
+    deb02:
+      ansible_host: 1.1.1.4
+    #host3:
+    #  ansible_host: 192.168.1.3
+
+ansible-playbook -i inventory.yml ping_hosts.yml
+
+gatrhering_facts:
+hostname
+default_ipv4
+interface
+
+
+
 # SSH config #
 # Generate the ssh key on the master node:
 root@master:~# ssh-keygen -t rsa -C "main_router SSH key"
@@ -11,15 +41,16 @@ root@master:~# ssh-keygen -t rsa -C "main_router SSH key"
 root@master:~# ssh-copy-id kk@deb01
 root@master:~# ssh-copy-id kk@deb02
 
-# Inventory #
-    # inventory.yaml
-    https://mega.nz/folder/McoVmDTD#-gax2JDNcsc1eMV53GXzvg
-    hosts:
-      deb01:
-      ansible_host: 1.1.1.1
-      deb02:
-      ansible_host: 2.2.2.1
-# Inventory # END
+#region ### "TEORIA" ###
+      # inventory.yaml
+      https://mega.nz/folder/McoVmDTD#-gax2JDNcsc1eMV53GXzvg
+      hosts:
+        deb01:
+        ansible_host: 1.1.1.1
+        deb02:
+        ansible_host: 2.2.2.1
+#region 
+
 
 
 # Playbook #
@@ -240,63 +271,9 @@ https://rhtapps.redhat.com/promo/course/do007?segment=6
 1.
 1.23m
 
-<<<<<<< HEAD
 2. handler
  9.18m
-=======
-###
->>>>>>> 96fa9e9e60dd3779951b10926b5b7bffb1eac21b
 
-<<<<<<< HEAD
-
-=======
-
-
-
-
-# Inventory #
-inventory.yaml
-
-myhosts:
- hosts:
-  deb01:
-   ansible_host: 1.1.1.1
-  deb02:
-   ansible_host: 2.2.2.1
-
-
-# Playbook #
-playbook.yaml
-
-- name: My first
-  hosts: myhosts
-  tasks:
-  - name: ping my hosts
-    ansible.builtin.ping:
-
-  - name: Print message
-    ansible.builtin.debug:
-     msg: Hello
-
-
-# example ping
-
-~/ansible/hosts.yaml 
-[web]
-1.1.1.1
-[dns]
-deb02.dupa.com
-
-
-ansible  -i  ~/ansible/hosts.yaml all -m  ansible.builtin.ping  
-
-# limit hosts to which the playbook applies
-ansible-playbook -i ansible/hosts.yaml -c local ansible/mastery.yaml --limit deb12,deb11
-
-
-
-
->>>>>>> 96fa9e9e60dd3779951b10926b5b7bffb1eac21b
 #endregion Ansible Basics #
 
 
