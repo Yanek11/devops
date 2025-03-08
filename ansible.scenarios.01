@@ -33,7 +33,7 @@ Log Management: Automating the collection and analysis of log files. ****
 
 Resource Monitoring: Setting up monitoring for system resources like CPU, memory, and disk usage. *****
 
-    - ping hosts, print a result message *****
+    - ping hosts, print a result message ***** DONE
 
     - restart ****
 

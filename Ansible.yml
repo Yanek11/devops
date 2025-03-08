@@ -26,49 +26,97 @@ all:
 
 ansible-playbook -i inventory.yml ping_hosts.yml
 
-gatrhering_facts:
-hostname
-default_ipv4
-interface
-"macaddress":
+
+# scenario 02  
+# gathering facts. script showing hostname, mac, default_ipv4 - 
+  Explanation:
+  We introduce an associative array seen.
+  Before printing a macaddress line, we check if it's already in seen.
+  If it's not, we print it and add it to seen.
+
+  hostname
+  default_ipv4
+  interface
+  "macaddress":
+
+  kk@ansible:~/ansible/ping01$ cat ./find_lines.sh 
+  #!/bin/bash
+
+    awk '
+        /"hostname":/ {
+            print;
+        }
+        /"default_ipv4":/ {
+
+            print;
+            getline;
+            print;
+        }
+
+        /"interface":/ {
+            print;
+            getline;
+            print;
+        }
 
 
-# script showing hostname, mac, default_ipv4 - 
-./find_lines.sh
+    /"macaddress":/ {
+            if (!seen[$0]) {
+                print;
+                seen[$0] = 1;
+            }
+        }
+    ' -
 
-Explanation:
-We introduce an associative array seen.
-Before printing a macaddress line, we check if it's already in seen.
-If it's not, we print it and add it to seen.
+# scenario 02  END
+
+# scenario 03
+# Resource Monitoring: Setting up monitoring for system resources like CPU, memory, and disk usage. *****
 
 
-kk@ansible:~/ansible/ping01$ cat ./find_lines.sh 
-#!/bin/bash
 
-  awk '
-      /"hostname":/ {
-          print;
+    # showing CPU values if the sum (column %CPU) exceeds 70% 
+    monitor_cpu_over70perc.sh                                                     
+    #!/bin/bash
+
+    # Run top command and capture the output
+    top_output=$(top -b -n 1)
+
+    # Extract the first four lines and column headers
+    echo "$top_output" | head -n 7
+
+    # Calculate the sum of %CPU values in the column below the header
+    total_cpu=$(echo "$top_output" | awk '
+      /^%Cpu/ {header=1; next}
+      header && /^[[:space:]]*[0-9]+/ {
+        if ($9 ~ /^[0-9.]+$/) total+=$9
       }
-      /"default_ipv4":/ {
-          print;
-          getline;
-          print;
-      }
+      END {print total}
+    ')
 
-      /"interface":/ {
-          print;
-          getline;
-          print;
-      }
+    # Check if total CPU usage exceeds 70% and print the relevant rows if it does
+    if (( $(echo "$total_cpu > 70" | bc -l) )); then
+      echo "$top_output" | awk '
+        /^%Cpu/ {header=1; next}
+        header && $9 > 0 {print}
+      '
+    fi
 
 
-  /"macaddress":/ {
-          if (!seen[$0]) {
-              print;
-              seen[$0] = 1;
-          }
-      }
-  ' -
+
+
+
+# scenario 03 END
+
+
+
+
+
+
+
+
+
+
 
 
 # SSH config #
