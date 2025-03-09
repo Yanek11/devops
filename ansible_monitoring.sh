@@ -1,4 +1,4 @@
-Process:
+***  Process ***
 
 1. 'monitor_cpu.sh' - creates a log file and  crontab runs it  as job  every  minute or  10 minutes (custom). the log file is getting updated
 
@@ -7,7 +7,7 @@ Process:
 3. 'find_cpu_sy_us_values.sh'-  shows records containing  values in 'sy' or 'us' columns    
   
 
-Details / scripts:
+*** Details / scripts ***
 
 1. monitor CPU, adding full date and time (hours/seconds)  
 
@@ -20,15 +20,47 @@ LOG_DIR="/home/kk/ansible/monitoring/"
 # Create log directory if it doesn't exist
 mkdir -p "$LOG_DIR"
 
-# Log file name based on the current date
-LOG_FILE="$LOG_DIR/cpu_usage_$(date +%Y-%m-%d).log"
+# Get hostname
+HOSTNAME=$(hostname)
+
+# Log file name based on the current date and hostname
+LOG_FILE="$LOG_DIR/cpu_usage_$(date +%Y-%m-%d)_host_$HOSTNAME.log"
 
 # Append date and time with seconds to the log file in 24 hour notation
 echo "===== $(date +'%a %b %e %H:%M:%S %Z %Y') =====" >> "$LOG_FILE"
 
-# Run top command in batch mode and filter the required lines
-top -b -n 1 -o +%CPU | head -n 9 >> "$LOG_FILE"
-
+# Run top command in batch mode and filter the required lines and sort them
+top -b -n 1 -o +%CPU | awk '
+    NR <= 8 { print } # Print the first 8 lines (header)
+    NR == 9 {
+        header_line = $0;
+    }
+    NR > 9 { # Process the remaining lines (process list)
+        if ($1 ~ /^[0-9]+$/ && $9 != "0.0") { # Check if line starts with PID and %CPU is not 0.0
+            lines[NR] = $0;
+            cpu_values[NR] = $9 + 0; #store cpu values for sorting
+        }
+    }
+    END {
+        print header_line; #print the header line
+        for (i = 1; i <= NR; i++) {
+            if (cpu_values[i] != "") {
+                max_cpu = -1;
+                max_index = 0;
+                for(j = 1; j <= NR; j++) {
+                    if(cpu_values[j] > max_cpu) {
+                        max_cpu = cpu_values[j];
+                        max_index = j;
+                    }
+                }
+                if (max_index > 0){
+                    print lines[max_index];
+                    cpu_values[max_index] = -1; #mark as printed
+                }
+            }
+        }
+    }
+' >> "$LOG_FILE"
 
 
 
@@ -53,51 +85,106 @@ done
 
 
 
-3. finding rows with values <> 0.0 in 'sy' and 'us'
+3. finding rows with values <> 0.0 in 'sy'  (%SYSTEM) and 'us' (%USER)
 
 'find_cpu_sy_us_values.sh'
 
-FINAL filtering out sy and us values that are not 0.0. sections are numbered
+3a
+filtering out sy and us values that are not 0.0. sections are numbered. table output
 
 #!/bin/bash
 
-# version newest and working  09/03/2025
- 
+# Version newest and working 09/03/2025
+
 # Check if a file argument was passed
 if [ -z "$1" ]; then
     echo "Usage: $0 <log_file>"
     exit 1
 fi
- 
+
 # Log file is passed as the first argument
 LOG_FILE="$1"
- 
-# Initialize header counter
-header_count=1
- 
+
 # Process the log file
-awk -v header_count="$header_count" '
+awk '
 BEGIN {
-    header = ""   # Initialize header variable
+    header_count = 1  # Index counter
+    printed_header = 0  # Ensure header prints only once
+    header = ""  # Initialize timestamp variable
 }
-# When we find the header (=====> lines)
+
+# Detect timestamp header (=====> lines)
 (/^=====/) {
-    # Update the header with the new line
-    header = $0
+    header = $0  # Store timestamp
 }
-# Process the CPU line
+
+# Process CPU usage lines
 /%Cpu\(s\):/ {
-    # Only print CPU lines if usage is not zero
-    if ($2 != "0.0" || $4 != "0.0") {
-        # Print the header before the CPU line if it exists
-        if (header != "") {
-            print header_count ". " header  # Print the header
-            header_count++  # Increment header counter after printing the header
-            header = ""  # Clear the header to prevent repeating it for the next CPU line
-        }
-        print $0  # Print the CPU usage line
+    # Ensure we skip column headers (lines containing "us," "sy," etc.)
+    if ($2 == "us,") {
+        next
     }
+
+    # Extract %User and %System CPU usage values
+    user_cpu = $2 + 0  # Convert to number
+    system_cpu = $4 + 0  # Convert to number
+
+    # Skip rows where both %User and %System are 0.0
+    if (user_cpu == 0.0 && system_cpu == 0.0) {
+        next
+    }
+
+    # Print table header once
+    if (printed_header == 0) {
+        print "Index | Timestamp                      | %User  | %System | %Nice | %Idle | %Wait | %Hi | %Si | %St"
+        print "------------------------------------------------------------------------------------------------"
+        printed_header = 1
+    }
+
+    # Print the timestamp before the CPU data
+    if (header != "") {
+        printf "%-5d | %-30s |", header_count, header  # Print index and timestamp
+        header_count++  # Increment index
+        header = ""  # Clear timestamp
+    }
+
+    # Print CPU usage values
+    printf " %-6.1f | %-7.1f | %-5.1f | %-5.1f | %-5.1f | %-5.1f | %-3.1f | %-3.1f | %-3.1f\n",
+        user_cpu, system_cpu, $6, $8, $10, $12, $14, $16, $18
 }
 ' "$LOG_FILE"
+
+output example 
+kk@ansible:~/ansible/monitoring$ ./find_cpu_sy_us_values.sh cpu_usage_2025-03-08.log |head
+Index | Timestamp                      | %User  | %System | %Nice | %Idle | %Wait | %Hi | %Si | %St
+------------------------------------------------------------------------------------------------
+1     | ===== Sat Mar  8 12:00:01 AM CET 2025 ===== | 50.0   | 0.0     | 0.0   | 50.0  | 0.0   | 0.0   | 0.0 | 0.0 | 0.0
+2     | ===== Sat Mar  8 12:35:01 AM CET 2025 ===== | 0.0    | 50.0    | 0.0   | 50.0  | 0.0   | 0.0   | 0.0 | 0.0 | 0.0
+3     | ===== Sat Mar  8 12:49:01 AM CET 2025 ===== | 50.0   | 0.0     | 0.0   | 50.0  | 0.0   | 0.0   | 0.0 | 0.0 | 0.0
+4     | ===== Sat Mar  8 12:54:01 AM CET 2025 ===== | 0.0    | 50.0    | 0.0   | 50.0  | 0.0   | 0.0   | 0.0 | 0.0 | 0.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** Implementation via Ansible ***
+
+ansible targets:
+
+1. installation: stress-ng 
+2. creating folder /home/kk/ansible/monitoring
+3. uploading 'monitor_cpu.sh','random_cpu_load.sh', 'find_cpu_sy_us_values.sh' to /home/kk/ansible/monitoring
+4. updating crontab    
+*/1 * * * * /home/kk/ansible/monitoring/monitor_cpu.sh
+
+ansible control:
 
 
