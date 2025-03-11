@@ -12,6 +12,8 @@
 1. monitor CPU, adding full date and time (hours/seconds)  
 
 'monitor_cpu.sh'
+
+
 #!/bin/bash
 
 # Directory where log files will be saved
@@ -61,7 +63,6 @@ top -b -n 1 -o +%CPU | awk '
         }
     }
 ' >> "$LOG_FILE"
-
 
 
 2. generate CPU load ---  'stress-ng' --- 
