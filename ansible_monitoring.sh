@@ -16,7 +16,7 @@
         #!/bin/bash
 
         # Directory where log files will be saved
-        LOG_DIR="/home/kk/ansible/monitoring/"
+        LOG_DIR="/home/monitor/monitoring/"
 
         # Create log directory if it doesn't exist
         mkdir -p "$LOG_DIR"
