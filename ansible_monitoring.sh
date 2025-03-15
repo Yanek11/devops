@@ -88,13 +88,13 @@ end
 
 
 3. finding rows with values <> 0.0 in 'sy'  (%SYSTEM) and 'us' (%USER)
-'find_cpu_sy_us_values.sh'
+'find_cpu_sy_us_values.sh' 
 
 3a
 filtering out sy and us values that are not 0.0. sections are numbered. table output
 
         #!/bin/bash
-
+        # export/add to a $LOG_FILE=cpu_usage_$CURRENT_DATE.log
         # Version newest and working 09/03/2025
 
         # Check if a file argument was passed
@@ -188,10 +188,9 @@ ansible targets:
 3. uploading 'monitor_cpu.sh','random_cpu_load.sh', 'find_cpu_sy_us_values.sh' to /home/monitor/ansible/monitoring
 4. updating crontab    
 */1 * * * * /home/monitor/ansible/monitoring/monitor_cpu.sh
-5. getting cpu_usage_current.log
-5.a
-
+5. 'find_cpu_sy_us_values.sh' creates a logfile cpu_sy_us_values_$HOSTNAME.log
 
 ansible control:
 
-
+1.  download find_cpu_sy_us_values_$HOSTNAME.shfrom each host 
+2.  

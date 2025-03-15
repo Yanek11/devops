@@ -1,60 +1,87 @@
-kk@px:~$ cat ./firewall_NEWEST.sh
+working version 14/03/2025
+allows ssh from nordvpn pl and inea
+secure
+
+======================================
+Firewall script executed at: 2025-03-14 07:10:12 CET
+Script content:
 #!/bin/bash
 
-# PROXMOX - iptables config:SSH access working, fail2ban - OK, 
-# ver 1.0
-# 02/03/25
+# Firewall Setup - Version Tracking
 
+SCRIPT_PATH="$(realpath "$0")"  # Get the script file path
+VERSION_DATE=$(TZ="Europe/Warsaw" date "+%Y-%m-%d %H:%M:%S %Z")  # Current Date & CET Time
+LOG_FILE="/var/log/firewall_version.log"  # Log File for Version Tracking
 
-#1 Variable definitions for PROXMOX
-export EXTERNAL_IP_PROXMOX="88.99.213.79"
-export EXTERNAL_INTERFACE_PROXMOX="ens18"
+# Save the last execution time into the script itself
+sed -i "s/^# Last Updated: .*/# Last Updated: $VERSION_DATE/" "$SCRIPT_PATH"
 
-#1a for review
-export SSH_INTERNAL_PORT_PROXMOX="8585" # is it needed if external is the same as internal?
-# router iptables works without internal port definition
+# Log execution time and script content
+{
+    echo "======================================"
+    echo "Firewall script executed at: $VERSION_DATE"
+    echo "Script content:"
+    cat "$SCRIPT_PATH"
+    echo "======================================"
+} | sudo tee -a "$LOG_FILE"
 
-export SSH_EXTERNAL_PORT_PROXMOX="8585"  # The external port for SSH
-export ALLOWED_IPS_PROXMOX=("138.199.59.0/24" "45.134.212.0/24" "85.221.131.0/24" "85.221.155.0/24" "194.36.108.0/24" "89.163.154.0/24" "89.163.151.0/24")
+echo "Running firewall script - Version: $VERSION_DATE"
 
-#2 Clear existing rules (use with caution!)
+# Last Updated: 2025-03-14 07:10:12 CET
+
+# Define Variables
+INTERFACE="ens18"
+SSH_PORT="8585"
+WEB_PORT="8006"
+
+# Allowed IP ranges
+ALLOWED_IPS=(
+    "85.221.131.0/24" "85.221.155.0/24" "185.244.214.0/24"
+    "193.42.98.0/24" "193.42.99.0/24" "194.99.105.0/24"
+    "217.138.209.0/24" "37.120.156.0/24" "37.120.211.0/24"
+    "45.134.212.0/24" "5.253.206.0/24" "84.17.55.0/24" "95.214.217.221/24"
+)
+
+# Reset Rules
 sudo iptables -F
 sudo iptables -X
 sudo iptables -t nat -F
 sudo iptables -t nat -X
 
-#3 Set default policies (crucial for security)
-sudo iptables -P INPUT ACCEPT
-sudo iptables -P FORWARD DROP  # Default to DROP for security
-sudo iptables -P OUTPUT ACCEPT
-
-#4 Allow incoming SSH to Proxmox (from ALLOWED_IPS_PROXMOX) on the EXTERNAL port
-for ip in "${ALLOWED_IPS_PROXMOX[@]}"; do
-        #4a for review. router iptables does not  have this line
-#       sudo iptables -A INPUT -i $EXTERNAL_INTERFACE_PROXMOX -p tcp --dport $SSH_EXTERNAL_PORT_PROXMOX -s "$ip" -j ACCEPT
-        #4b - OK. the same as router's iptables
-        sudo iptables -A INPUT -i $EXTERNAL_INTERFACE_PROXMOX -s "$ip" -j ACCEPT
-done
-
-
-#5 # TESTING # Log all unauthorized SYN requests on all TCP ports
-sudo iptables -A INPUT -i "$EXTERNAL_INTERFACE_PROXMOX" -p tcp --syn -j LOG --log-prefix "IPTABLES_SYN_REQUEST: "
-sudo iptables -A INPUT -i "$EXTERNAL_INTERFACE_PROXMOX" -p tcp --syn -j DROP
-
-#5 Allow established and related connections
+# Allow Established Connections FIRST (Prevents Lockout)
 sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
-#6 Block all other incoming UDP traffic
+# Allow SSH & Web UI from Allowed IPs
+for ip in "${ALLOWED_IPS[@]}"; do
+    sudo iptables -A INPUT -i "$INTERFACE" -p tcp --dport "$SSH_PORT" -s "$ip" -j ACCEPT
+    sudo iptables -A INPUT -i "$INTERFACE" -p tcp --dport "$WEB_PORT" -s "$ip" -j ACCEPT
+done
+
+# Debugging: Log dropped packets
+sudo iptables -A INPUT -j LOG --log-prefix "IPTABLES_DROP_DEBUG: " --log-level 4
+
+# Block Unauthorized SSH & Web UI Attempts
+sudo iptables -A INPUT -i "$INTERFACE" -p tcp --dport "$SSH_PORT" -j DROP
+sudo iptables -A INPUT -i "$INTERFACE" -p tcp --dport "$WEB_PORT" -j DROP
+
+# Set Default Policy to DROP
+sudo iptables -P INPUT ACCEPT
+sudo iptables -P FORWARD DROP
+sudo iptables -P OUTPUT ACCEPT
+
+# Block Unwanted UDP Traffic
 sudo iptables -A INPUT -p udp --dport 111 -j DROP
 sudo iptables -A INPUT -p udp ! --dport 53 -j DROP
 sudo iptables -A INPUT -p udp -j DROP
 
-#7 Log and block the rest of the traffic (for security)
-sudo iptables -A INPUT -j LOG --log-prefix "IPTABLES_PROXMOX_DROP_INPUT: "
-# sudo iptables -A INPUT -j DROP # ??? this rule cuts off SSH access. it is applied as in router iptables though  
-sudo iptables -A FORWARD -j LOG --log-prefix "IPTABLES_PROXMOX_DROP_FORWARD: "
+# Log and Block Remaining Traffic
+sudo iptables -A INPUT -j LOG --log-prefix "IPTABLES_DROP_INPUT: "
+sudo iptables -A FORWARD -j LOG --log-prefix "IPTABLES_DROP_FORWARD: "
 sudo iptables -A FORWARD -j DROP
 
-# Save the rules (important!)
- sudo iptables-save > /etc/iptables/rules.v4
+echo "Firewall rules applied successfully! ($VERSION_DATE)"
+
+# sudo iptables-save > /etc/iptables/rules.v4
+# sudo iptables-save > /etc/iptables/rules.v4
+======================================
