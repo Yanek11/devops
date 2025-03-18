@@ -1,11 +1,14 @@
-# TODO 
-# 19.02. fix the script: ssh key based authentication not working 
 
 
-# BORG BACKUP # WORKING CONFIG 18.02.2025
+# BORG BACKUP # WORKING CONFIG 17.03.2025
 
-#1 SSH public  keys 
-cat ~/.ssh/id_rsa.pub | ssh -p23 u447269@u447269.your-storagebox.de install-ssh-key
+#1 creating and copying ssh pubkey to borg
+        
+        ssh-keygen 
+        Generating public/private rsa key pair.
+        Enter file in which to save the key (/home/kk/.ssh/id_rsa): /home/kk/scripts/borg/security/id_rsa_borg
+        
+        ssh-copy-id -i /home/kk/scripts/borg/security/id_rsa_borg.pub -p 23 u447269@u447269.your-storagebox.de
 
 #2 Repo password
 export BORG_PASSPHRASE='Factoid0-Plating8-Untracked9-Lullaby8'

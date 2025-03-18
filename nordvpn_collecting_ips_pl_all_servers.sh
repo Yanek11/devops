@@ -1,8 +1,12 @@
+
+
+kk@deb01:~/scripts/nordvpn$ cat ./nordvpn_ips_collecting_all.sh
 #!/bin/bash
-# VERSION WITHOUT USING SCREEN
+
 # Script Name: nordvpn_ips_collecting_all.sh
 # Description: This script connects to a list of NordVPN servers,
-#              collects up to 9 unique IP addresses for each server,
+#              collects up to 9 unique IP addresses for each server,9
+
 #              and stores them in a file, formatted as "IP hostname".
 #              It uses connection caching and random server selection to
 #              improve efficiency and avoid repeated connections to the same server.
@@ -85,7 +89,7 @@ while true; do  # Outer loop:  Continues until all servers have enough IPs.
       }
       END {
         # After processing the entire output file, check the count.
-        if (server_ips[server] < 9) {
+        if (server_ips[server] < 20) {
           # If less than 9 IPs, print the count and 0 (not recorded).
           print server_ips[server], 0;
         } else {
@@ -166,3 +170,4 @@ while true; do  # Outer loop:  Continues until all servers have enough IPs.
 done
 
 echo "Finished"
+kk@deb01:~/scripts/nordvpn$ 
