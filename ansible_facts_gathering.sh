@@ -1,73 +1,54 @@
-***  Process ***
+ANSIBLE
 
-executed on monitored clients
+Facts gathering and analyzing overview
 
-1. 'monitor_cpu.sh' - creates a log file and  crontab runs it  as job  every  minute or  10 minutes (custom). the log file is getting updated
+- collect system data of each host -clients
+- pull the data to the control - control
+- view the data by hostname and/or date - control
 
-2. 'stress-ng' -  generates values in "sy" and "us" columns
 
-3. 'find_cpu_sy_us_values.sh'-  shows records containing  values in 'sy' or 'us' columns    
+What is collected 
+- os: distro
+- cpu: speed/cores number
+- ram: amount
+- disk: number and size
+- net: number nad type of NICs 
+
+
+
+Scripts executed on ansible clients:
+
+1. 'gather_facts_all.sh'
+user: monitoring
+script location: /home/monitoring/scripts
+log file location: /home/monitoring/logs
+creates/updates a log file. filename format: hostname_gathered_facts_all_timestamp.log  
+collects system data (cpu/ram/disk/os/network). 
+adds timestamp of the scan.
+
+---- log file data layout and content ----
+rows:
+    os: os,distro,codename 
+    cpu: cores number/cpu speed
+    ram: amount
+    disk: number_of_disks,total_disks_size:disk01_size,disk02_size (etc) 
+    network: nic01_name,IP_address/netmask,nic02_name,IP_address/netmask (etc),default gateway
+
+example of the output log:
+host01:01/02/2025,0616PM
+os: Linux,Debian12,bookworm
+ram: 2GB
+disks: 2,100GB,sda01,50GB,sda02,50GB
+nics: 2, ens18,1.1.1.1/24,ens19,2.1.1.1/24,1.1.1.254/24
+
+
+2. crontab runs the script  as job  every  minute or  10 minutes (custom)
+
   
+Scripts executed on ansible control
 
-*** Details / scripts ***
-
-1. monitor CPU, adding full date and time (hours/seconds)  
-'monitor_cpu.sh'
-
-
-        #!/bin/bash
-
-        # Directory where log files will be saved
-        LOG_DIR="/home/monitor/monitoring/"
-
-        # Create log directory if it doesn't exist
-        mkdir -p "$LOG_DIR"
-
-        # Get hostname
-        HOSTNAME=$(hostname)
-
-        # Log file name based on the current date and hostname
-        LOG_FILE="$LOG_DIR/cpu_usage_$(date +%Y-%m-%d)_host_$HOSTNAME.log"
-
-        # Append date and time with seconds to the log file in 24 hour notation
-        echo "===== $(date +'%a %b %e %H:%M:%S %Z %Y') =====" >> "$LOG_FILE"
-
-        # Run top command in batch mode and filter the required lines and sort them
-        top -b -n 1 -o +%CPU | awk '
-            NR <= 8 { print } # Print the first 8 lines (header)
-            NR == 9 {
-                header_line = $0;
-            }
-            NR > 9 { # Process the remaining lines (process list)
-                if ($1 ~ /^[0-9]+$/ && $9 != "0.0") { # Check if line starts with PID and %CPU is not 0.0
-                    lines[NR] = $0;
-                    cpu_values[NR] = $9 + 0; #store cpu values for sorting
-                }
-            }
-            END {
-                print header_line; #print the header line
-                for (i = 1; i <= NR; i++) {
-                    if (cpu_values[i] != "") {
-                        max_cpu = -1;
-                        max_index = 0;
-                        for(j = 1; j <= NR; j++) {
-                            if(cpu_values[j] > max_cpu) {
-                                max_cpu = cpu_values[j];
-                                max_index = j;
-                            }
-                        }
-                        if (max_index > 0){
-                            print lines[max_index];
-                            cpu_values[max_index] = -1; #mark as printed
-                        }
-                    }
-                }
-            }
-        ' >> "$LOG_FILE"
-
-end
-
-
+1. pull_logs.sh
+getting logs
 
 2. generate CPU load ---  'stress-ng' --- 
 'random_cpu_load.sh' 
