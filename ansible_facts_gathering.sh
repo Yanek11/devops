@@ -1,10 +1,11 @@
 ANSIBLE
 
-Facts gathering and analyzing overview
+Facts gathering and analyzing overview using ansible
 
+Overview
 - collect system data of each host -clients
-- pull the data to the control - control
-- view the data by hostname and/or date - control
+- pull the data to the control - control host
+- view the data by hostname and/or date - control host
 
 
 What is collected 
@@ -12,34 +13,14 @@ What is collected
 - cpu: speed/cores number
 - ram: amount
 - disk: number and size
-- net: number nad type of NICs 
+- net: names of NICs, IPs,default gw 
 
 
 
-Scripts executed on ansible clients:
 
-1. 'gather_facts_all.sh'
-user: monitoring
-script location: /home/monitoring/scripts
-log file location: /home/monitoring/logs
-creates/updates a log file. filename format: hostname_gathered_facts_all_timestamp.log  
-collects system data (cpu/ram/disk/os/network). 
-adds timestamp of the scan.
 
----- log file data layout and content ----
-rows:
-    os: os,distro,codename 
-    cpu: cores number/cpu speed
-    ram: amount
-    disk: number_of_disks,total_disks_size:disk01_size,disk02_size (etc) 
-    network: nic01_name,IP_address/netmask,nic02_name,IP_address/netmask (etc),default gateway
 
-example of the output log:
-host01:01/02/2025,0616PM
-os: Linux,Debian12,bookworm
-ram: 2GB
-disks: 2,100GB,sda01,50GB,sda02,50GB
-nics: 2, ens18,1.1.1.1/24,ens19,2.1.1.1/24,1.1.1.254/24
+
 
 
 2. crontab runs the script  as job  every  minute or  10 minutes (custom)
@@ -47,133 +28,170 @@ nics: 2, ens18,1.1.1.1/24,ens19,2.1.1.1/24,1.1.1.254/24
   
 Scripts executed on ansible control
 
-1. pull_logs.sh
-getting logs
+1. script that runs a playbook 
 
-2. generate CPU load ---  'stress-ng' --- 
-'random_cpu_load.sh' 
-        #!/bin/bash
+run_ansible_playbook.sh
+    #!/bin/bash
 
-        # Function to generate random CPU load
-        generate_load() {
-        local load=$(shuf -i 10-90 -n 1)  # Generate a random load percentage between 10 and 90
-        stress-ng --cpu 1 --cpu-method matrixprod --iomix 2 --cpu-load $load --timeout 2m &
-        }
+    # Script Name: run_ansible_playbook.sh
+    # Description: Runs the Ansible playbook for gathering system facts.
+    #              Handles environment setup and logging.
 
-        # Generate random load on all available CPUs
-        while true; do
-        for ((i=1; i<=$(nproc); i++)); do
-            generate_load
-        done
-        sleep 15  # Wait for 15 seconds before generating the next random load
-        done
+    # --- Configuration ---
+
+    PLAYBOOK_PATH="/home/admin/ansible/facts_gathering/facts_gathering_scripts/playbook.yaml"  # <-- CHANGE THIS
+    INVENTORY_PATH="/home/admin/ansible/facts_gathering/facts_gathering_scripts/inventory.yaml" # <-- CHANGE THIS
+    LOG_DIR="/home/admin/ansible/facts_gathering/facts_gathering_scripts/ansible_logs"  # <-- CHANGE THIS (optional)
+
+    # --- Setup ---
+
+    mkdir -p "$LOG_DIR"
+    LOG_FILE="$LOG_DIR/ansible_run_$(date +%Y%m%d_%H%M%S).log"
+
+    # --- Environment Setup (CRITICAL for Cron) ---
+
+    # Set up the environment *explicitly*.
+    export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"  # <-- ***CHANGE THIS***
+
+    # --- Run the Ansible Playbook ---
+
+    # Message indicating playbook execution is starting
+    echo "Starting execution of Ansible playbook at $(date)" >&2
+
+    /usr/bin/ansible-playbook -i "$INVENTORY_PATH" "$PLAYBOOK_PATH" >> "$LOG_FILE" 2>&1
+
+    # Check the exit status of ansible-playbook.
+    if [ $? -ne 0 ]; then
+    echo "Error: Ansible playbook failed.  See $LOG_FILE for details." >&2
+    exit 1
+    fi
+
+    # Message indicating successful completion
+    echo "Ansible playbook completed successfully at $(date)" >&2
+
+    exit 0
+end  dadcsd
+
+
+1. creating and testing of SSH key-based passwordless connectivity
+
+
+
+
+
+
+
+ansible-playbook -i inventory.yaml playbook.yaml 
+
+playbook.yaml
+                
+    ---
+    - name: Manage Monitoring User and SSH Key
+    hosts: all
+    become: true
+    vars:
+        source_key_file: "{{ hostvars['localhost']['source_key_file'] | default('/home/kk/.ssh/monitoring_user.pub') }}"
+        target_user: "{{ hostvars['localhost']['target_user'] | default('monitoring') }}"
+        monitoring_groups: "{{ hostvars['localhost']['monitoring_groups'] | default(['sudo','adm']) }}"
+        target_key_file: "/home/{{ target_user }}/.ssh/authorized_keys"
+
+    tasks:
+        - name: Check if target user (monitoring) exists
+        command: id {{ target_user }}
+        register: user_check
+        ignore_errors: true
+        changed_when: false
+        become: true  # Use become, handled by inventory
+
+        - name: Create monitoring user (if it doesn't exist)
+        user:
+            name: "{{ target_user }}"
+            shell: /bin/bash
+            create_home: yes
+            groups: "{{ monitoring_groups | join(',') }}"
+            append: yes
+            state: present
+        when: user_check.rc != 0
+        become: true
+
+        - name: Ensure monitoring user's home directory has correct permissions
+        file:
+            path: "/home/{{ target_user }}"
+            owner: "{{ target_user }}"
+            group: "{{ target_user }}"
+            mode: '0755'
+        when: user_check.rc != 0
+        become: true
+
+        - name: Ensure .ssh directory exists for target user
+        file:
+            path: "/home/{{ target_user }}/.ssh"
+            state: directory
+            owner: "{{ target_user }}"
+            group: "{{ target_user }}"
+            mode: '0700'
+        become: true
+        when: user_check.rc != 0
+
+        - name: Copy SSH public key to authorized_keys
+        copy:
+            src: "{{ source_key_file }}"
+            dest: "{{ target_key_file }}"
+            owner: "{{ target_user }}"
+            group: "{{ target_user }}"
+            mode: '0600'
+        become: true
+        when: user_check.rc != 0
+        register: copy_result
+
+        - name: Report key copy status
+        debug:
+            msg: "Key copied successfully to {{ inventory_hostname }}"
+        when: copy_result.changed
+
+        - name: Report key copy failure (user existed, but copy failed)
+        debug:
+            msg: "Failed to copy key to {{ inventory_hostname }}. User already existed."
+        when: not copy_result.changed and user_check.rc == 0
+
+        - name: Report user creation and key copy
+        debug:
+            msg: "User '{{ target_user }}' created and key copied to {{ inventory_hostname }}."
+        when: user_check.rc != 0
+
+        - name: test ssh
+        command: ssh -o StrictHostKeyChecking=no -i "{{ hostvars['localhost']['source_key_file'] | regex_replace('.pub$', '') }}" {{ target_user }}@{{ inventory_hostname }} "echo 'Connection successful'"
+        register: ssh_result
+        delegate_to: localhost
+        changed_when: false
+        when: copy_result.changed == true
+
+        - name: Show ssh test result
+        debug:
+            msg: "ssh test: {{ ssh_result.stdout }}"
+        when: ssh_result.stdout is defined
 end
 
+inventory.yaml
+    all:
+    hosts:
+        ubu01:
+        ansible_host: 1.1.1.1  # Replace with ubu01's actual IP or hostname
+        deb01:
+        ansible_host: 1.1.1.3  # Replace with deb01's actual IP or hostname
+    vars:
+        ansible_user: admin  # Connect as the 'admin' user
+        ansible_ssh_private_key_file: /home/admin/.ssh/id_rsa  # Path to admin's *private* key on CONT>
+        # ansible_become_pass: ...  # REMOVE THIS LINE.  Use --ask-become-pass or passwordless sudo.
 
-3. finding rows with values <> 0.0 in 'sy'  (%SYSTEM) and 'us' (%USER)
-'find_cpu_sy_us_values.sh' 
+    # Playbook variables (can be here or in the playbook, but inventory is better)
+        source_key_file: /home/admin/.ssh/id_rsa.pub  # Path to monitoring's *public* key on CONTROL N>
+        target_user: monitoring
+        monitoring_groups:
+        - sudo
+        - adm
 
-3a
-filtering out sy and us values that are not 0.0. sections are numbered. table output
 
-        #!/bin/bash
-        # export/add to a $LOG_FILE=cpu_usage_$CURRENT_DATE.log
-        # Version newest and working 09/03/2025
-
-        # Check if a file argument was passed
-        if [ -z "$1" ]; then
-            echo "Usage: $0 <log_file>"
-            exit 1
-        fi
-
-        # Log file is passed as the first argument
-        LOG_FILE="$1"
-
-        # Process the log file
-        awk '
-        BEGIN {
-            header_count = 1  # Index counter
-            printed_header = 0  # Ensure header prints only once
-            header = ""  # Initialize timestamp variable
-        }
-
-        # Detect timestamp header (=====> lines)
-        (/^=====/) {
-            header = $0  # Store timestamp
-        }
-
-        # Process CPU usage lines
-        /%Cpu\(s\):/ {
-            # Ensure we skip column headers (lines containing "us," "sy," etc.)
-            if ($2 == "us,") {
-                next
-            }
-
-            # Extract %User and %System CPU usage values
-            user_cpu = $2 + 0  # Convert to number
-            system_cpu = $4 + 0  # Convert to number
-
-            # Skip rows where both %User and %System are 0.0
-            if (user_cpu == 0.0 && system_cpu == 0.0) {
-                next
-            }
-
-            # Print table header once
-            if (printed_header == 0) {
-                print "Index | Timestamp                      | %User  | %System | %Nice | %Idle | %Wait | %Hi | %Si | %St"
-                print "------------------------------------------------------------------------------------------------"
-                printed_header = 1
-            }
-
-            # Print the timestamp before the CPU data
-            if (header != "") {
-                printf "%-5d | %-30s |", header_count, header  # Print index and timestamp
-                header_count++  # Increment index
-                header = ""  # Clear timestamp
-            }
-
-            # Print CPU usage values
-            printf " %-6.1f | %-7.1f | %-5.1f | %-5.1f | %-5.1f | %-5.1f | %-3.1f | %-3.1f | %-3.1f\n",
-                user_cpu, system_cpu, $6, $8, $10, $12, $14, $16, $18
-        }
-        ' "$LOG_FILE"
 end
 
-
-output example 
-kk@ansible:~/ansible/monitoring$ ./find_cpu_sy_us_values.sh cpu_usage_2025-03-08.log |head
-Index | Timestamp                      | %User  | %System | %Nice | %Idle | %Wait | %Hi | %Si | %St
-------------------------------------------------------------------------------------------------
-1     | ===== Sat Mar  8 12:00:01 AM CET 2025 ===== | 50.0   | 0.0     | 0.0   | 50.0  | 0.0   | 0.0   | 0.0 | 0.0 | 0.0
-2     | ===== Sat Mar  8 12:35:01 AM CET 2025 ===== | 0.0    | 50.0    | 0.0   | 50.0  | 0.0   | 0.0   | 0.0 | 0.0 | 0.0
-3     | ===== Sat Mar  8 12:49:01 AM CET 2025 ===== | 50.0   | 0.0     | 0.0   | 50.0  | 0.0   | 0.0   | 0.0 | 0.0 | 0.0
-4     | ===== Sat Mar  8 12:54:01 AM CET 2025 ===== | 0.0    | 50.0    | 0.0   | 50.0  | 0.0   | 0.0   | 0.0 | 0.0 | 0.0
-
-
-
-
-
-
-
-
-
-
-
-
-
-*** Implementation via Ansible ***
-
-ansible targets:
-
-1. installation: stress-ng 
-2. add user monitor
-2. creating folder /home/monitor/ansible/monitoring
-3. uploading 'monitor_cpu.sh','random_cpu_load.sh', 'find_cpu_sy_us_values.sh' to /home/monitor/ansible/monitoring
-4. updating crontab    
-*/1 * * * * /home/monitor/ansible/monitoring/monitor_cpu.sh
-5. 'find_cpu_sy_us_values.sh' creates a logfile cpu_sy_us_values_$HOSTNAME.log
-
-ansible control:
-
-1.  download find_cpu_sy_us_values_$HOSTNAME.shfrom each host 
-2.  
+2. pushing  'gather_facts_all.sh' script to hosts
