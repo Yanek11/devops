@@ -10,6 +10,7 @@ Your Ansible control machine can SSH into your Proxmox server and the target VMs
 Your Proxmox server's IP address is 88.99.213.85. You'll need to substitute this with your actual Proxmox server IP if it's different.
 You have created a Proxmox API token.
 The monitoring user is not pre-created in the template.
+
 Step 1: Prepare Your Ansible Control Machine
 
 Install Ansible: If you don't already have Ansible installed, do so:
@@ -35,48 +36,52 @@ This will create:
 
 ~/.ssh/monitoring_key (private key - keep this secure!)
 ~/.ssh/monitoring_key.pub (public key - this will be copied to the VMs)
+
+
 Step 2: Create the Ansible Inventory File (inventory.yaml)
 
-Create a file named inventory.yaml in your proxmox_monitoring directory with the following content. Replace placeholders with your actual values.
+inventory.yaml
 
-YAML
 
-all:
-  hosts:
-    px.kk1kk.store:  # Inventory name for Proxmox
-      ansible_host: 88.99.213.85  #  Proxmox IP - CHANGE THIS
-      ansible_user: admin  #  User for SSH to Proxmox - CHANGE THIS if not 'admin'
-      ansible_ssh_private_key_file: /home/admin/.ssh/id_rsa  # SSH key for Proxmox - CHANGE THIS
-      proxmox_api_host: 88.99.213.85 # Proxmox API Host - CHANGE THIS
-    test01:
-      ansible_host: 1.1.1.11  # IP will be set by Cloud-Init
-      ansible_user: monitoring
-      ansible_ssh_private_key_file: /home/admin/.ssh/monitoring_key # Use the monitoring_key
-    test02:
-      ansible_host: 1.1.1.12  # IP will be set by Cloud-Init
-      ansible_user: monitoring
-      ansible_ssh_private_key_file: /home/admin/.ssh/monitoring_key
 
-  children:
-    proxmox_hosts:
-      hosts:
-        px.kk1kk.store:
-      vars:  # Proxmox-specific variables
-        proxmox_api_endpoint: "https://{{ proxmox_api_host }}:8006/api2/json"
-        proxmox_node: "px"  # Your Proxmox node name - CHANGE THIS
-        template_name: "debian-template"  # Your template name - CHANGE THIS
-        new_vm_base_id: 301  # Starting VMID - choose an unused range - CHANGE THIS
-        num_vms: 2
-        vm_names:
-          - test01  # VM Name 1 - CHANGE THIS if needed
-          - test02  # VM Name 2 - CHANGE THIS if needed
-        vm_configs:
-          test01:
-            ip_address: "1.1.1.11/24"  # VM 1 IP - CHANGE THIS
-            gateway: "1.1.1.254"      # VM 1 Gateway - CHANGE THIS
-          test02:
-            ip_address: "1.1.1.12/24"  # VM 2 IP - CHANGE THIS
-            gateway: "1.1.1.254"      # VM 2 Gateway - CHANGE THIS
+  all:
+    hosts:
+      px.kk1kk.store:  # Inventory name for Proxmox
+        ansible_host: 88.99.213.85  #  Proxmox IP - CHANGE THIS
+        ansible_user: ansible  #  User for SSH to Proxmox - CHANGE THIS if not 'admin'
+        ansible_ssh_private_key_file: /home/admin/.ssh/id_rsa  # SSH key for Proxmox - CHANGE THIS
+        proxmox_api_host: 88.99.213.85 # Proxmox API Host - CHANGE THIS
+      test01:
+        ansible_host: 1.1.1.11  # IP will be set by Cloud-Init
+        ansible_user: monitoring
+        ansible_ssh_private_key_file: /home/admin/.ssh/monitoring_key # Use the monitoring_key
+      test02:
+        ansible_host: 1.1.1.12  # IP will be set by Cloud-Init
+        ansible_user: monitoring
+        ansible_ssh_private_key_file: /home/admin/.ssh/monitoring_key
+
+    children:
+      proxmox_hosts:
+        hosts:
+          px.kk1kk.store:
+        vars:  # Proxmox-specific variables
+          proxmox_api_endpoint: "https://{{ proxmox_api_host }}:8006/api2/json"
+          proxmox_node: "px"  # Your Proxmox node name - CHANGE THIS
+          template_name: "debian-template"  # Your template name - CHANGE THIS
+          new_vm_base_id: 301  # Starting VMID - choose an unused range - CHANGE THIS
+          num_vms: 2
+          vm_names:
+            - test01  # VM Name 1 - CHANGE THIS if needed
+            - test02  # VM Name 2 - CHANGE THIS if needed
+          vm_configs:
+            test01:
+              ip_address: "1.1.1.11/24"  # VM 1 IP - CHANGE THIS
+              gateway: "1.1.1.254"      # VM 1 Gateway - CHANGE THIS
+            test02:
+              ip_address: "1.1.1.12/24"  # VM 2 IP - CHANGE THIS
+              gateway: "1.1.1.254"      # VM 2 Gateway - CHANGE THIS
+end
+
 Important Notes on inventory.yaml:
 
 ansible_host (for Proxmox): This must be the IP address or hostname of your Proxmox server.
@@ -88,390 +93,377 @@ template_name: The exact name of your Debian template in Proxmox.
 new_vm_base_id: Choose a starting VM ID that doesn't conflict with any existing VMs.
 vm_names: The names you want to give your new VMs. Make sure these names don't already exist.
 vm_configs: The desired IP addresses and gateway for your VMs. These should be within your network's address space and not conflict with any existing IPs.
+
+
 Step 3: Create the Ansible Playbook (playbook.yaml)
 
-Create a file named playbook.yaml in your proxmox_monitoring directory with the following content:
+playbook.yaml
 
-YAML
+  ---
+  - name: Deploy Proxmox VM from Template
+    hosts: proxmox_hosts
+    gather_facts: false
+    become: true
 
----
-- name: Deploy Proxmox VM from Template
-  hosts: proxmox_hosts
-  gather_facts: false
-  become: true
+    vars:
+      proxmox_api_endpoint: "https://{{ proxmox_api_host }}:8006/api2/json"
+      proxmox_node: "{{ proxmox_node }}"  # Use var from inventory
+      template_name: "{{ template_name }}" # Use var from inventory
+      new_vm_base_id: "{{ new_vm_base_id }}" # Use var
+      num_vms: "{{ num_vms }}"             # Use var
+      vm_names: "{{ vm_names }}"             # Use var
+      vm_configs: "{{ vm_configs }}"          # Use var
 
-  vars:
-    proxmox_api_endpoint: "https://{{ proxmox_api_host }}:8006/api2/json"
-    proxmox_node: "{{ proxmox_node }}"  # Use var from inventory
-    template_name: "{{ template_name }}" # Use var from inventory
-    new_vm_base_id: "{{ new_vm_base_id }}" # Use var
-    num_vms: "{{ num_vms }}"             # Use var
-    vm_names: "{{ vm_names }}"             # Use var
-    vm_configs: "{{ vm_configs }}"          # Use var
+    tasks:
+      - name: Set proxmox_api_token_id and proxmox_api_token_secret
+        set_fact:
+          proxmox_api_token_id: "{{ lookup('env', 'PROXMOX_API_TOKEN_ID') | default('', true) }}"
+          proxmox_api_token_secret: "{{ lookup('env', 'PROXMOX_API_TOKEN_SECRET') | default('', true) }}"
+        no_log: true
 
-  tasks:
-    - name: Set proxmox_api_token_id and proxmox_api_token_secret
-      set_fact:
-        proxmox_api_token_id: "{{ lookup('env', 'PROXMOX_API_TOKEN_ID') | default('', true) }}"
-        proxmox_api_token_secret: "{{ lookup('env', 'PROXMOX_API_TOKEN_SECRET') | default('', true) }}"
-      no_log: true
+      - name: Fail if proxmox_api_token_id or proxmox_api_token_secret is empty
+        fail:
+          msg: "PROXMOX_API_TOKEN_ID and PROXMOX_API_TOKEN_SECRET must be set via environment variables"
+        when: proxmox_api_token_id == '' or proxmox_api_token_secret == ''
+        no_log: true
 
-    - name: Fail if proxmox_api_token_id or proxmox_api_token_secret is empty
-      fail:
-        msg: "PROXMOX_API_TOKEN_ID and PROXMOX_API_TOKEN_SECRET must be set via environment variables"
-      when: proxmox_api_token_id == '' or proxmox_api_token_secret == ''
-      no_log: true
+      - name: Get Proxmox node status (to check API connectivity)
+        uri:
+          url: "{{ proxmox_api_endpoint }}/nodes/{{ proxmox_node }}/status"
+          method: GET
+          validate_certs: false  #  <-- Use valid certs in production!
+          headers:
+            Authorization: "PVEAPIToken={{ proxmox_api_token_id }}!{{ proxmox_api_token_secret }}"
+        register: proxmox_node_status
+        failed_when: proxmox_node_status.status != 200
+        no_log: true
 
-    - name: Get Proxmox node status (to check API connectivity)
-      uri:
-        url: "{{ proxmox_api_endpoint }}/nodes/{{ proxmox_node }}/status"
-        method: GET
-        validate_certs: false  #  <-- Use valid certs in production!
-        headers:
-          Authorization: "PVEAPIToken={{ proxmox_api_token_id }}!{{ proxmox_api_token_secret }}"
-      register: proxmox_node_status
-      failed_when: proxmox_node_status.status != 200
-      no_log: true
+      - name: Clone VMs from the template
+        community.general.proxmox_kvm:
+          api_host: "{{ proxmox_api_host }}"
+          api_token: "{{ proxmox_api_token_id }}!{{ proxmox_api_token_secret }}"
+          node: "{{ proxmox_node }}"
+          vmid: "{{ new_vm_base_id + item.0 }}"
+          newid: "{{ new_vm_base_id + item.0 }}"  # Redundant, but harmless
+          name: "{{ item.1 }}"
+          full: true  # Full clone
+          template: "{{ template_name }}"
+          state: present
+          timeout: 300
+        loop: "{{ vm_names | list | enumerate }}"  # Corrected loop
+        register: vm_creation_results
+        no_log: true
 
-    - name: Clone VMs from the template
-      community.general.proxmox_kvm:
-        api_host: "{{ proxmox_api_host }}"
-        api_token: "{{ proxmox_api_token_id }}!{{ proxmox_api_token_secret }}"
-        node: "{{ proxmox_node }}"
-        vmid: "{{ new_vm_base_id + item.0 }}"
-        newid: "{{ new_vm_base_id + item.0 }}"  # Redundant, but harmless
-        name: "{{ item.1 }}"
-        full: true  # Full clone
-        template: "{{ template_name }}"
-        state: present
-        timeout: 300
-      loop: "{{ vm_names | list | enumerate }}"  # Corrected loop
-      register: vm_creation_results
-      no_log: true
+      - name: Start the newly created VMs
+        community.general.proxmox_kvm:
+          api_host: "{{ proxmox_api_host }}"
+          api_token: "{{ proxmox_api_token_id }}!{{ proxmox_api_token_secret }}"
+          node: "{{ proxmox_node }}"
+          vmid: "{{ item.vmid }}"
+          state: started
+        loop: "{{ vm_creation_results.results }}"
+        when: item.changed
+        no_log: true
 
-    - name: Start the newly created VMs
-      community.general.proxmox_kvm:
-        api_host: "{{ proxmox_api_host }}"
-        api_token: "{{ proxmox_api_token_id }}!{{ proxmox_api_token_secret }}"
-        node: "{{ proxmox_node }}"
-        vmid: "{{ item.vmid }}"
-        state: started
-      loop: "{{ vm_creation_results.results }}"
-      when: item.changed
-      no_log: true
+  - name: Configure newly created VMs (Cloud-Init)
+    hosts: proxmox_hosts
+    gather_facts: false
+    become: true
 
-- name: Configure newly created VMs (Cloud-Init)
-  hosts: proxmox_hosts
-  gather_facts: false
-  become: true
+    tasks:
+      - name: Set proxmox_api_token_id and proxmox_api_token_secret
+        set_fact:
+          proxmox_api_token_id: "{{ lookup('env', 'PROXMOX_API_TOKEN_ID') | default('', true) }}"
+          proxmox_api_token_secret: "{{ lookup('env', 'PROXMOX_API_TOKEN_SECRET') | default('', true) }}"
+        no_log: true
 
-  tasks:
-    - name: Set proxmox_api_token_id and proxmox_api_token_secret
-      set_fact:
-        proxmox_api_token_id: "{{ lookup('env', 'PROXMOX_API_TOKEN_ID') | default('', true) }}"
-        proxmox_api_token_secret: "{{ lookup('env', 'PROXMOX_API_TOKEN_SECRET') | default('', true) }}"
-      no_log: true
+      - name: Fail if proxmox_api_token_id or proxmox_api_token_secret is empty
+        fail:
+          msg: "PROXMOX_API_TOKEN_ID and PROXMOX_API_TOKEN_SECRET must be set via environment variables"
+        when: proxmox_api_token_id == '' or proxmox_api_token_secret == ''
+        no_log: true
 
-    - name: Fail if proxmox_api_token_id or proxmox_api_token_secret is empty
-      fail:
-        msg: "PROXMOX_API_TOKEN_ID and PROXMOX_API_TOKEN_SECRET must be set via environment variables"
-      when: proxmox_api_token_id == '' or proxmox_api_token_secret == ''
-      no_log: true
+      - name: Configure Cloud-Init IP Address for each VM
+        community.general.proxmox_kvm:
+          api_host: "{{ proxmox_api_host }}"
+          api_token: "{{ proxmox_api_token_id }}!{{ proxmox_api_token_secret }}"
+          node: "{{ proxmox_node }}"
+          vmid: "{{ new_vm_base_id + item.0 }}"
+          ipconfig0: "ip={{ vm_configs[item.1].ip_address }},gw={{ vm_configs[item.1].gateway }}"
+        loop: "{{ vm_names | list | enumerate }}"
+        no_log: true
 
-    - name: Configure Cloud-Init IP Address for each VM
-      community.general.proxmox_kvm:
-        api_host: "{{ proxmox_api_host }}"
-        api_token: "{{ proxmox_api_token_id }}!{{ proxmox_api_token_secret }}"
-        node: "{{ proxmox_node }}"
-        vmid: "{{ new_vm_base_id + item.0 }}"
-        ipconfig0: "ip={{ vm_configs[item.1].ip_address }},gw={{ vm_configs[item.1].gateway }}"
-      loop: "{{ vm_names | list | enumerate }}"
-      no_log: true
+  - name: Deploy and Schedule Monitoring Scripts on VMs
+    hosts: all  # Target all hosts (including the newly created VMs)
+    become: true
+    gather_facts: true
 
-- name: Deploy and Schedule Monitoring Scripts on VMs
-  hosts: all  # Target all hosts (including the newly created VMs)
-  become: true
-  gather_facts: true
+    vars:
+      monitoring_user: "monitoring"
+      monitoring_groups:
+        - sudo
+        - adm
+      source_key_file: /home/admin/.ssh/monitoring_key.pub #  <-- Put the *public* key path here!
 
-  vars:
-    monitoring_user: "monitoring"
-    monitoring_groups:
-      - sudo
-      - adm
-    source_key_file: /home/admin/.ssh/monitoring_key.pub #  <-- Put the *public* key path here!
+    tasks:
+      - name: Create the monitoring user (if it doesn't exist)
+        user:
+          name: "{{ monitoring_user }}"
+          groups: "{{ monitoring_groups | join(',') }}"
+          append: true
+          shell: /bin/bash
+          create_home: yes
+          state: present
+        register: user_creation  # Register to check if created
+        become: true
 
-  tasks:
-    - name: Create the monitoring user (if it doesn't exist)
-      user:
-        name: "{{ monitoring_user }}"
-        groups: "{{ monitoring_groups | join(',') }}"
-        append: true
-        shell: /bin/bash
-        create_home: yes
-        state: present
-      register: user_creation  # Register to check if created
-      become: true
+      - name: Ensure monitoring directories exist
+        file:
+          path: "{{ item }}"
+          state: directory
+          owner: "{{ monitoring_user }}"
+          group: "{{ monitoring_user }}"
+          mode: '0755'
+        loop:
+          - /home/{{ monitoring_user }}/scripts
+          - /home/{{ monitoring_user }}/logs
+        become: true
 
-    - name: Ensure monitoring directories exist
-      file:
-        path: "{{ item }}"
-        state: directory
-        owner: "{{ monitoring_user }}"
-        group: "{{ monitoring_user }}"
-        mode: '0755'
-      loop:
-        - /home/{{ monitoring_user }}/scripts
-        - /home/{{ monitoring_user }}/logs
-      become: true
+      - name: Copy monitoring scripts
+        copy:
+          src: "{{ item }}"
+          dest: "/home/{{ monitoring_user }}/scripts/{{ item | basename }}"
+          owner: "{{ monitoring_user }}"
+          group: "{{ monitoring_user }}"
+          mode: '0755'
+        loop:
+          - monitor_cpu.sh
+          - random_cpu_load.sh
+          - find_cpu_sy_us_values.sh
+        become: true
 
-    - name: Copy monitoring scripts
-      copy:
-        src: "{{ item }}"
-        dest: "/home/{{ monitoring_user }}/scripts/{{ item | basename }}"
-        owner: "{{ monitoring_user }}"
-        group: "{{ monitoring_user }}"
-        mode: '0755'
-      loop:
-        - monitor_cpu.sh
-        - random_cpu_load.sh
-        - find_cpu_sy_us_values.sh
-      become: true
+      - name: Add monitoring user's public key to authorized_keys
+        authorized_key:
+          user: "{{ monitoring_user }}"
+          state: present
+          key: "{{ lookup('file', source_key_file) }}"  # Read the *public* key
+        become: true
+        when: user_creation.changed # Only when the user has been created
 
-    - name: Add monitoring user's public key to authorized_keys
-      authorized_key:
-        user: "{{ monitoring_user }}"
-        state: present
-        key: "{{ lookup('file', source_key_file) }}"  # Read the *public* key
-      become: true
-      when: user_creation.changed # Only when the user has been created
+      - name: Schedule monitor_cpu.sh in cron (every minute)
+        cron:
+          name: "Run CPU monitoring script"
+          minute: "*"
+          job: "/home/{{ monitoring_user }}/scripts/monitor_cpu.sh"
+          user: "{{ monitoring_user }}"
+          state: present
+        become: true
 
-    - name: Schedule monitor_cpu.sh in cron (every minute)
-      cron:
-        name: "Run CPU monitoring script"
-        minute: "*"
-        job: "/home/{{ monitoring_user }}/scripts/monitor_cpu.sh"
-        user: "{{ monitoring_user }}"
-        state: present
-      become: true
+      - name: Check if cpu_load screen session exists
+        shell: "screen -ls | grep -q 'cpu_load' || true"
+        register: screen_check
+        become_user: "{{ monitoring_user }}"  # Run as the 'monitoring' user
+        changed_when: false
+        ignore_errors: true
 
-    - name: Check if cpu_load screen session exists
-      shell: "screen -ls | grep -q 'cpu_load' || true"
-      register: screen_check
-      become_user: "{{ monitoring_user }}"  # Run as the 'monitoring' user
-      changed_when: false
-      ignore_errors: true
+      - name: Start random_cpu_load.sh in a detached screen session
+        shell: "screen -dmS cpu_load /home/{{ monitoring_user }}/scripts/random_cpu_load.sh"
+        become_user: "{{ monitoring_user }}"
+        when: screen_check.rc != 0
+        changed_when: false
+end
 
-    - name: Start random_cpu_load.sh in a detached screen session
-      shell: "screen -dmS cpu_load /home/{{ monitoring_user }}/scripts/random_cpu_load.sh"
-      become_user: "{{ monitoring_user }}"
-      when: screen_check.rc != 0
-      changed_when: false
 Step 4: Create the Monitoring Scripts
 
 Create the following three shell scripts in the same directory as your playbook.yaml file (proxmox_monitoring):
 
 monitor_cpu.sh:
+  #!/bin/bash
 
-Bash
+  # Script Name: monitor_cpu.sh
+  # Description: Monitors CPU usage using 'top' and logs it to a file.
 
-#!/bin/bash
+  # --- Configuration ---
+  LOG_DIR="/home/monitoring/logs"
+  HOSTNAME=$(hostname)  # Get the hostname dynamically
 
-# Script Name: monitor_cpu.sh
-# Description: Monitors CPU usage using 'top' and logs it to a file.
+  # Ensure log directory exists
+  mkdir -p "$LOG_DIR" 2>/dev/null
 
-# --- Configuration ---
-LOG_DIR="/home/monitoring/logs"
-HOSTNAME=$(hostname)  # Get the hostname dynamically
+  # Log file name based on the current date and hostname
+  LOG_FILE="$LOG_DIR/cpu_usage_$(date +%Y-%m-%d)_host_$HOSTNAME.log"
 
-# Ensure log directory exists
-mkdir -p "$LOG_DIR" 2>/dev/null
+  # --- Main Script ---
 
-# Log file name based on the current date and hostname
-LOG_FILE="$LOG_DIR/cpu_usage_$(date +%Y-%m-%d)_host_$HOSTNAME.log"
+  # Append date and time with seconds to the log file in 24 hour notation
+  echo "===== $(date '+%a %b %e %H:%M:%S %Z %Y') =====" >> "$LOG_FILE"
 
-# --- Main Script ---
+  # Run top command in batch mode and filter the required lines and sort them
+  top -b -n 1 -o +%CPU | awk '
+      NR <= 8 { print } # Print the first 8 lines (header)
+      NR == 9 {
+          header_line = $0;
+      }
+      NR > 9 { # Process the remaining lines (process list)
+          if ($1 ~ /^[0-9]+$/ && $9 != "0.0") { # Check if line starts with PID and %CPU is not 0.0
+              lines[NR] = $0;
+              cpu_values[NR] = $9 + 0; #store cpu values for sorting
+          }
+      }
+      END {
+          print header_line; #print the header line
+          for (i = 1; i <= NR; i++) {
+              if (cpu_values[i] != "") {
+                  max_cpu = -1;
+                  max_index = 0;
+                  for(j = 1; j <= NR; j++) {
+                      if(cpu_values[j] > max_cpu) {
+                          max_cpu = cpu_values[j];
+                          max_index = j;
+                      }
+                  }
+                  if (max_index > 0){
+                      print lines[max_index];
+                      cpu_values[max_index] = -1; #mark as printed
+                  }
+              }
+          }
+      }
+  ' >> "$LOG_FILE"
 
-# Append date and time with seconds to the log file in 24 hour notation
-echo "===== $(date '+%a %b %e %H:%M:%S %Z %Y') =====" >> "$LOG_FILE"
+  exit 0
+end
 
-# Run top command in batch mode and filter the required lines and sort them
-top -b -n 1 -o +%CPU | awk '
-    NR <= 8 { print } # Print the first 8 lines (header)
-    NR == 9 {
-        header_line = $0;
-    }
-    NR > 9 { # Process the remaining lines (process list)
-        if ($1 ~ /^[0-9]+$/ && $9 != "0.0") { # Check if line starts with PID and %CPU is not 0.0
-            lines[NR] = $0;
-            cpu_values[NR] = $9 + 0; #store cpu values for sorting
-        }
-    }
-    END {
-        print header_line; #print the header line
-        for (i = 1; i <= NR; i++) {
-            if (cpu_values[i] != "") {
-                max_cpu = -1;
-                max_index = 0;
-                for(j = 1; j <= NR; j++) {
-                    if(cpu_values[j] > max_cpu) {
-                        max_cpu = cpu_values[j];
-                        max_index = j;
-                    }
-                }
-                if (max_index > 0){
-                    print lines[max_index];
-                    cpu_values[max_index] = -1; #mark as printed
-                }
-            }
-        }
-    }
-' >> "$LOG_FILE"
-
-exit 0
 random_cpu_load.sh:
 
-Bash
+    #!/bin/bash
 
-#!/bin/bash
+    # Script Name: random_cpu_load.sh
+    # Description: Generates random CPU load using stress-ng.
 
-# Script Name: random_cpu_load.sh
-# Description: Generates random CPU load using stress-ng.
+    # Function to generate random CPU load
+    generate_load() {
+      local load=$(shuf -i 10-90 -n 1)  # Random load between 10% and 90%
+      stress-ng --cpu 1 --cpu-method matrixprod --iomix 2 --cpu-load "$load" --timeout 2m &
+    }
 
-# Function to generate random CPU load
-generate_load
+    # Generate random load on all available CPUs
+    while true; do  # Infinite loop - run continuously
+      for ((i=1; i<=$(nproc); i++)); do
+        generate_load
+      done
+      sleep 15  # Wait 15 seconds before generating the next load
+    done
+end
 
-
-
-
-
-finish
-
-
-2.0 Pro Experimental. Bez dostępu do informacji w czasie rzeczywistym i niektórych funkcji Gemini.
-Bash
-
-#!/bin/bash
-
-# Script Name: random_cpu_load.sh
-# Description: Generates random CPU load using stress-ng.
-
-# Function to generate random CPU load
-generate_load() {
-  local load=$(shuf -i 10-90 -n 1)  # Random load between 10% and 90%
-  stress-ng --cpu 1 --cpu-method matrixprod --iomix 2 --cpu-load "$load" --timeout 2m &
-}
-
-# Generate random load on all available CPUs
-while true; do  # Infinite loop - run continuously
-  for ((i=1; i<=$(nproc); i++)); do
-    generate_load
-  done
-  sleep 15  # Wait 15 seconds before generating the next load
-done
 find_cpu_sy_us_values.sh:
+  #!/bin/bash
 
-Bash
+  # Script Name: find_cpu_sy_us_values.sh
+  # Description: Parses a 'top' command log file and extracts CPU usage statistics.
+  #              Outputs a formatted table of %User and %System CPU usage,
+  #              along with the process name, for entries where us or sy > 50.
 
-#!/bin/bash
+  # Usage: ./find_cpu_sy_us_values.sh <log_file>
 
-# Script Name: find_cpu_sy_us_values.sh
-# Description: Parses a 'top' command log file and extracts CPU usage statistics.
-#              Outputs a formatted table of %User and %System CPU usage,
-#              along with the process name, for entries where us or sy > 50.
-
-# Usage: ./find_cpu_sy_us_values.sh <log_file>
-
-if [ $# -ne 1 ]; then
-  echo "Usage: $0 <log_file>" >&2
-  exit 1
-fi
-
-LOG_FILE="$1"
-
-if [[ ! -r "$LOG_FILE" ]]; then
-    echo "Error: Log file '$LOG_FILE' not found or not readable." >&2
+  if [ $# -ne 1 ]; then
+    echo "Usage: $0 <log_file>" >&2
     exit 1
-fi
+  fi
 
-# --- Main Processing (awk) ---
+  LOG_FILE="$1"
 
-awk '
-BEGIN {
-    header_count = 1
-    printed_header = 0
-    header = ""
-    process_name = ""
-}
+  if [[ ! -r "$LOG_FILE" ]]; then
+      echo "Error: Log file '$LOG_FILE' not found or not readable." >&2
+      exit 1
+  fi
 
-(/^=====/) {
-    header = $0
-}
+  # --- Main Processing (awk) ---
 
-/%Cpu\(s\):/ {
-    if ($2 == "us,") { next } #Skip headers.
-
-    user_cpu = 0;
-    system_cpu = 0;
-     for (i = 1; i <= NF; i++) {
-        if ($i ~ /us$/) {
-            gsub(/[^0-9.]/, "", $i);
-            user_cpu = $i + 0;
-        } else if ($i ~ /sy$/) {
-            gsub(/[^0-9.]/, "", $i)
-            system_cpu = $i + 0;
-        }
-    }
-
-    if (user_cpu > 50 || system_cpu > 50) {
-        high_cpu = 1
-    } else {
-        high_cpu = 0
-    }
-}
-
-{
-  if (header != "" && high_cpu == 1 && $1 ~ /^[0-9]+$/ && NF > 10){
-
-    if (printed_header == 0) {
-        print "Index | Timestamp                      | %User  | %System | %CPU | COMMAND"
-        print "-----------------------------------------------------------------------------------------"
-        printed_header = 1
-    }
-
-    if (header != "") {
-        printf "%-5d | %-30s |", header_count, header
-        header_count++
-        header = ""
-    }
-      printf " %-6.1f | %-7.1f | %-4s | %s\n", user_cpu, system_cpu, $(NF-3), $NF
+  awk '
+  BEGIN {
+      header_count = 1
+      printed_header = 0
+      header = ""
+      process_name = ""
   }
-}
 
-' "$LOG_FILE"
+  (/^=====/) {
+      header = $0
+  }
 
-exit 0
+  /%Cpu\(s\):/ {
+      if ($2 == "us,") { next } #Skip headers.
+
+      user_cpu = 0;
+      system_cpu = 0;
+      for (i = 1; i <= NF; i++) {
+          if ($i ~ /us$/) {
+              gsub(/[^0-9.]/, "", $i);
+              user_cpu = $i + 0;
+          } else if ($i ~ /sy$/) {
+              gsub(/[^0-9.]/, "", $i)
+              system_cpu = $i + 0;
+          }
+      }
+
+      if (user_cpu > 50 || system_cpu > 50) {
+          high_cpu = 1
+      } else {
+          high_cpu = 0
+      }
+  }
+
+  {
+    if (header != "" && high_cpu == 1 && $1 ~ /^[0-9]+$/ && NF > 10){
+
+      if (printed_header == 0) {
+          print "Index | Timestamp                      | %User  | %System | %CPU | COMMAND"
+          print "-----------------------------------------------------------------------------------------"
+          printed_header = 1
+      }
+
+      if (header != "") {
+          printf "%-5d | %-30s |", header_count, header
+          header_count++
+          header = ""
+      }
+        printf " %-6.1f | %-7.1f | %-4s | %s\n", user_cpu, system_cpu, $(NF-3), $NF
+    }
+  }
+
+  ' "$LOG_FILE"
+
+  exit 0
+end
+
+
 Step 5: Set Environment Variables
 
 Before running the Ansible playbook, you must set the PROXMOX_API_TOKEN_ID and PROXMOX_API_TOKEN_SECRET environment variables in your terminal session. Replace "your_token_id@pve" and "your_token_secret" with your actual Proxmox API token ID and secret. Crucially, the token ID must include the realm (e.g., @pve, @pam).
 
-Bash
+  export PROXMOX_API_TOKEN_ID="your_token_id@pve"
+  export PROXMOX_API_TOKEN_SECRET="your_token_secret"
 
-export PROXMOX_API_TOKEN_ID="your_token_id@pve"
-export PROXMOX_API_TOKEN_SECRET="your_token_secret"
+
 Step 6: Run the Ansible Playbook
 
 From within your proxmox_monitoring directory, run the playbook:
 
-Bash
 
-ansible-playbook -i inventory.yaml playbook.yaml
+
+  ansible-playbook -i inventory.yaml playbook.yaml
+
+
 Step 7: (Optional) Run with Increased Verbosity (for Debugging)
 
 If you encounter any errors, run the playbook with the -vvv option for more detailed output:
 
-Bash
 
-ansible-playbook -i inventory.yaml playbook.yaml -vvv
+  ansible-playbook -i inventory.yaml playbook.yaml -vvv
+
+
+
 Step 8: Verify the Deployment
 
 After the playbook finishes, verify that:
@@ -494,6 +486,8 @@ screen is running: Check for a screen session on the vms.
 screen -ls
 Log Files are Being Created:  After a few minutes, check the /home/monitoring/logs directory on the VMs for cpu_usage_*.log files.
 
+
+
 Step 9: Analyzing the Logs
 
 After letting the monitoring run for a while, you can use the find_cpu_sy_us_values.sh script to analyze the top output logs:
@@ -511,8 +505,6 @@ Bash
 
 ./find_cpu_sy_us_values.sh cpu_usage_2023-10-27_host_test01.log
 (Replace with the actual log file name). This will produce the formatted output table showing high CPU usage entries.
-
-This complete, step-by-step guide, along with the provided scripts and inventory/playbook files, covers all aspects of deploying VMs on Proxmox, configuring them, and setting up CPU monitoring.  Remember to replace the placeholder values with your actual environment details. This is a comprehensive and corrected solution. If you follow these steps carefully, you should have a working setup.
 
 
 
