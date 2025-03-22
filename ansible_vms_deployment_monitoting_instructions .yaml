@@ -11,31 +11,32 @@ Your Proxmox server's IP address is 88.99.213.85. You'll need to substitute this
 You have created a Proxmox API token.
 The monitoring user is not pre-created in the template.
 
+
+
+***********************************************************************************************************************
+
+
 Step 1: Prepare Your Ansible Control Machine
 
 Install Ansible: If you don't already have Ansible installed, do so:
 
-Bash
+  sudo apt update  # On Debian/Ubuntu
+  sudo apt install ansible -y
+  # OR
+  sudo yum install ansible -y # On CentOS/RHEL/Fedora
 
-sudo apt update  # On Debian/Ubuntu
-sudo apt install ansible -y
-# OR
-sudo yum install ansible -y # On CentOS/RHEL/Fedora
 Create a Project Directory: This keeps everything organized:
 
-Bash
+  mkdir proxmox_monitoring
+  cd proxmox_monitoring
 
-mkdir proxmox_monitoring
-cd proxmox_monitoring
 Generate an SSH Key Pair (for the monitoring user):  This key will be used for passwordless SSH access to the VMs after they are created. Do not use a passphrase for this key to simplify the automation.
 
-Bash
-
-ssh-keygen -t ed25519 -f ~/.ssh/monitoring_key -C "monitoring_user_key"
+  ssh-keygen -t ed25519 -f ~/.ssh/monitoring_key -C "monitoring_user_key"
 This will create:
 
-~/.ssh/monitoring_key (private key - keep this secure!)
-~/.ssh/monitoring_key.pub (public key - this will be copied to the VMs)
+  ~/.ssh/monitoring_key (private key - keep this secure!)
+  ~/.ssh/monitoring_key.pub (public key - this will be copied to the VMs)
 
 
 Step 2: Create the Ansible Inventory File (inventory.yaml)
@@ -442,8 +443,8 @@ Step 5: Set Environment Variables
 
 Before running the Ansible playbook, you must set the PROXMOX_API_TOKEN_ID and PROXMOX_API_TOKEN_SECRET environment variables in your terminal session. Replace "your_token_id@pve" and "your_token_secret" with your actual Proxmox API token ID and secret. Crucially, the token ID must include the realm (e.g., @pve, @pam).
 
-  export PROXMOX_API_TOKEN_ID="your_token_id@pve"
-  export PROXMOX_API_TOKEN_SECRET="your_token_secret"
+  export PROXMOX_API_TOKEN_ID='your_token_id@pve'
+  export PROXMOX_API_TOKEN_SECRET='your_token_secret'
 
 
 Step 6: Run the Ansible Playbook
